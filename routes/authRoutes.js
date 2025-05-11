@@ -1,21 +1,47 @@
-import express from 'express';
+import {
+    registerUser,
+    loginUser,
+    logoutUser,
+    currentUser,
+} from "../controllers/authController.js";
 
-const router = express.Router();
-
-router.post('/login', (req, res) => {
-    res.send("Login Router");
-});
-
-router.post('/register', (req, res) => {
-    res.send("Register Router");
-});
-
-router.post('/logout', (req, res) => {
-    res.send("Logout Router");
-});
-
-router.get('/getuser', (req, res) => {
-    res.send("Get User Router");
-});
-
-export default router;
+export default [
+    {
+        method: "POST",
+        path: "/api/auth/register",
+        options: {
+            auth: false
+        },
+        handler: registerUser,
+    },
+    {
+        method: "POST",
+        path: "/api/auth/login",
+        options: {
+            auth: false 
+        },
+        handler: loginUser,
+    },
+    {
+        method: "POST",
+        path: "/api/auth/logout",
+        options: {
+            auth: {
+                strategy: "jwt",
+                mode: "try", 
+            },
+        },
+        handler: logoutUser,
+    },
+    {
+        method: "GET",
+        path: "/api/auth/me",
+        options: {
+            auth: {
+                strategy: "jwt",
+                mode: "required"
+            }
+        },
+        handler: currentUser,
+    },
+];
