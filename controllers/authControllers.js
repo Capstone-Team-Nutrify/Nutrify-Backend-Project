@@ -105,12 +105,18 @@ export const loginUser = async (request, h) => {
 };
 
 export const logoutUser = (request, h) => {
+
+
   return h
     .response({
       status: "success",
       message: "Logout berhasil",
     })
-    .unstate("jwt");
+    .unstate("jwt", { 
+      path: '/',
+      isSecure: false,
+      isSameSite: 'Lax'
+    });
 };
 
 export const currentUser = async (request, h) => {
