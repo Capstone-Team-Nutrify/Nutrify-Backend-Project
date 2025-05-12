@@ -10,7 +10,7 @@ import { notFoundHandler } from './utils/responseHandler.js';
 
 const init = async () => {
     const server = Hapi.server({
-        port: process.env.PORT || 8080,
+        port: process.env.PORT,
         host: 'localhost',
         routes: {
             cors: {
@@ -47,11 +47,6 @@ const init = async () => {
     await connectDB();
 
     server.ext('onPreResponse', (request, h) => {
-    const { response } = request;
-    
-    if (request.path === '/api/auth/logout') {
-        return h.continue;
-    }
     
     if (request.state && request.state.jwt) {
         console.log(`Preserving JWT cookie for path: ${request.path}`);
@@ -77,7 +72,7 @@ const init = async () => {
     });
 
     await server.start();
-    console.log(`Server running on ${server.info.uri}`);
+    console.log(`Server Berjalan di ${server.info.uri}`);
 };
 
 process.on('unhandledRejection', (err) => {
