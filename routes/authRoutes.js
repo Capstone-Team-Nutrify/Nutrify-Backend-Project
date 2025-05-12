@@ -28,7 +28,7 @@ export default [
         options: {
             auth: {
                 strategy: "jwt",
-                mode: "try", 
+                mode: "required", 
             },
         },
         handler: logoutUser,
