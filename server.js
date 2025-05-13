@@ -1,36 +1,37 @@
-import 'dotenv/config';
-import Hapi from '@hapi/hapi';
-import { connectDB } from './config/db.js';
-import authRoutes from './routes/authRoutes.js';
-import userRoutes from './routes/userRoutes.js';
-import jwtStrategy from './strategies/jwtStrategy.js';
-import cookie from '@hapi/cookie';
-import jwt from 'jsonwebtoken'; 
-import { notFoundHandler } from './utils/responseHandler.js';
+import "dotenv/config";
+import Hapi from "@hapi/hapi";
+import { connectDB } from "./config/db.js";
+import authRoutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import jwtStrategy from "./strategies/jwtStrategy.js";
+import cookie from "@hapi/cookie";
+import jwt from "jsonwebtoken";
+import { notFoundHandler } from "./utils/responseHandler.js";
+import { errorHandlerPlugin } from "./utils/errorHandler.js";
 
 const init = async () => {
     const server = Hapi.server({
         port: process.env.PORT,
-        host: 'localhost',
+        host: "localhost",
         routes: {
             cors: {
-                origin: ['*'], 
+                origin: ["*"],
                 credentials: true,
-                headers: ['Accept', 'Content-Type', 'Authorization']
-            }
-        }
+                headers: ["Accept", "Content-Type", "Authorization"],
+            },
+        },
     });
 
-    await server.register([cookie, jwtStrategy]);
-    
-    server.auth.strategy('session', 'cookie', {
+    await server.register([cookie, jwtStrategy, errorHandlerPlugin]); 
+
+    server.auth.strategy("session", "cookie", {
         cookie: {
-            name: 'jwt',
+            name: "session-id",
             password: process.env.JWT_SECRET,
             isSecure: false,
-            path: '/',
+            path: "/",
             ttl: 6 * 24 * 60 * 60 * 1000,
-            clearInvalid: true
+            clearInvalid: true,
         },
         validate: async (request, session) => {
             try {
@@ -39,44 +40,27 @@ const init = async () => {
             } catch (err) {
                 return { isValid: false };
             }
-        }
+        },
     });
 
-    server.auth.default('jwt');
+    server.auth.default("jwt");
 
     await connectDB();
-
-    server.ext('onPreResponse', (request, h) => {
-    
-    if (request.state && request.state.jwt) {
-        console.log(`Preserving JWT cookie for path: ${request.path}`);
-        h.state('jwt', request.state.jwt, {
-            ttl: 6 * 24 * 60 * 60 * 1000,
-            isSecure: false,
-            isHttpOnly: true,
-            encoding: 'none',
-            isSameSite: 'Lax',
-            path: '/'
-        });
-    }
-    
-    return h.continue;
-});
 
     server.route([...authRoutes, ...userRoutes]);
 
     server.route({
-        method: '*',
-        path: '/{any*}',
-        handler: (request, h) => notFoundHandler(request, h)
+        method: "*",
+        path: "/{any*}",
+        handler: (request, h) => notFoundHandler(request, h),
     });
 
     await server.start();
     console.log(`Server Berjalan di ${server.info.uri}`);
 };
 
-process.on('unhandledRejection', (err) => {
-    console.error('Unhandled promise rejection:', err);
+process.on("unhandledRejection", (err) => {
+    console.error("Unhandled promise rejection:", err);
     process.exit(1);
 });
 
