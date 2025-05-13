@@ -8,13 +8,10 @@ export const allUsers = async (request, h) => {
       !request.auth.credentials ||
       request.auth.credentials.role !== "admin"
     ) {
-      return h
-        .response({
-          status: "error",
-          data: null,
-          message: "Tidak memiliki izin",
-        })
-        .code(403);
+      return h.response({
+        status: "fail",
+        message: "Anda tidak memiliki akses untuk melihat daftar pengguna",
+      }).code(403);
     }
 
     const users = await User.find().select("-password");
@@ -23,8 +20,9 @@ export const allUsers = async (request, h) => {
       data: { users },
       message: "Daftar pengguna berhasil diambil",
     });
-  } catch (error) {
-    console.error("allUsers error:", error);
-    return errorHandler(request, h, error);
+  }
+  catch (error) {
+    console.error("Error fetching users:", error);
+    return errorHandler(error, h);
   }
 };
