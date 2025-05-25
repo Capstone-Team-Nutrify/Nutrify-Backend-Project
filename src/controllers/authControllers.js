@@ -3,8 +3,8 @@ import jwt from "jsonwebtoken";
 import { errorHandler } from "../utils/responseHandler.js";
 import bcrypt from "bcryptjs";
 
-const generateToken = (userId) => { // Hapus parameter role
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { // Hapus role dari payload
+const generateToken = (userId) => { 
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { 
     expiresIn: "6d",
   });
 };
