@@ -3,8 +3,8 @@ import jwt from "jsonwebtoken";
 import { errorHandler } from "../utils/responseHandler.js";
 import bcrypt from "bcryptjs";
 
-const generateToken = (userId, role) => {
-  return jwt.sign({ id: userId, role }, process.env.JWT_SECRET, {
+const generateToken = (userId) => { // Hapus parameter role
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { // Hapus role dari payload
     expiresIn: "6d",
   });
 };
@@ -35,22 +35,18 @@ export const registerUser = async (request, h) => {
         .code(400);
     }
 
-    const isFirstUser = (await User.countDocuments()) === 0 ? "admin" : "user";
-
     const user = await User.create({
       name,
       email,
       password,
-      role: isFirstUser,
     });
 
-    const token = generateToken(user._id.toString(), user.role);
+    const token = generateToken(user._id.toString());
 
     const userObj = {
       _id: user._id.toString(),
       name: user.name,
       email: user.email,
-      role: user.role
     };
 
     const response = h
@@ -104,13 +100,12 @@ export const loginUser = async (request, h) => {
         .code(401);
     }
 
-    const token = generateToken(user._id.toString(), user.role);
+    const token = generateToken(user._id.toString());
 
     const userObj = {
       _id: user._id.toString(),
       name: user.name,
       email: user.email,
-      role: user.role
     };
 
     const response = h.response({
@@ -173,7 +168,6 @@ export const currentUser = async (request, h) => {
       _id: user._id.toString(),
       name: user.name,
       email: user.email,
-      role: user.role
     };
 
     return h.response({

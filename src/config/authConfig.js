@@ -16,7 +16,7 @@ export const cookieStrategy = {
       try {
         if (!session?.token) return { isValid: false };
         const decoded = jwt.verify(session.token, process.env.JWT_SECRET);
-        return { isValid: true, credentials: decoded };
+        return { isValid: true, credentials: { id: decoded.id } }; // Hapus role
       } catch (err) {
         console.error("Session validation error:", err.message);
         return { isValid: false };

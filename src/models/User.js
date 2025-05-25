@@ -23,11 +23,6 @@ const userSchema = new Schema({
         required: [true, 'password harus diisi'],
         minlength: [6, 'password min 6 karakter']
     },
-    role: {
-        type: String,
-        enum: ['admin', 'user'],
-        default: 'user'
-    },
     isVerified: {
         type: Boolean,
         default: false

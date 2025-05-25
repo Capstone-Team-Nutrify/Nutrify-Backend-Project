@@ -19,8 +19,6 @@ const plugin = {
             isValid: true,
             credentials: {
               id: user._id,
-              role: user.role,
-              scope: [user.role],
             },
           };
         } catch (err) {

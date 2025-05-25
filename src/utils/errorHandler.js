@@ -45,16 +45,6 @@ export const errorHandlerPlugin = {
                 .code(401);
             }
 
-            if (response.isBoom && response.output.statusCode === 403) {
-                return h
-                .response({
-                    status: 'error',
-                    message: 'Hanya admin yang boleh mengakses resource ini',
-                    data: null,
-                })
-                .code(403);
-            }
-
             if (response.isBoom && response.output.statusCode === 404) {
                 return h
                 .response({
