@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import jwt from 'hapi-auth-jwt2';
 import User from '../models/User.js';
 
