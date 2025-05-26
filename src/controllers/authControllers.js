@@ -1,22 +1,22 @@
-import User from "../models/User.js";
-import jwt from "jsonwebtoken";
-import { errorHandler } from "../utils/responseHandler.js";
-import bcrypt from "bcryptjs";
+import User from '../models/User.js';
+import jwt from 'jsonwebtoken';
+import { errorHandler } from '../utils/responseHandler.js';
+import bcrypt from 'bcryptjs';
 
 const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
-    expiresIn: "6d",
+    expiresIn: '6d',
   });
 };
 
 const setCookieWithToken = (h, token) => {
-  return h.state("jwt", token, {
+  return h.state('jwt', token, {
     ttl: 6 * 24 * 60 * 60 * 1000,
     isSecure: false,
     isHttpOnly: true,
-    encoding: "none",
-    isSameSite: "Lax",
-    path: "/",
+    encoding: 'none',
+    isSameSite: 'Lax',
+    path: '/',
   });
 };
 
@@ -28,36 +28,38 @@ export const registerUser = async (request, h) => {
     if (existingUser) {
       return h
         .response({
-          status: "error",
+          status: 'error',
           data: null,
-          message: "Email sudah terdaftar",
+          message: 'Email sudah terdaftar',
         })
         .code(400);
     }
-
-    const isFirstUser = (await User.countDocuments()) === 0 ? "admin" : "user";
 
     const user = await User.create({
       name,
       email,
       password,
-      role: isFirstUser,
     });
 
-    const token = generateToken(user._id);
+    const token = generateToken(user._id.toString());
 
-    user.password = undefined;
+    const userObj = {
+      _id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+    };
 
     const response = h
       .response({
-        status: "success",
-        data: { user },
-        message: "Registrasi berhasil",
+        status: 'success',
+        data: { user: userObj },
+        message: 'Registrasi berhasil',
       })
       .code(201);
 
     return setCookieWithToken(response, token);
   } catch (err) {
+    console.error('Register error:', err);
     return errorHandler(request, h, err);
   }
 };
@@ -69,20 +71,20 @@ export const loginUser = async (request, h) => {
     if (!email || !password) {
       return h
         .response({
-          status: "error",
+          status: 'error',
           data: null,
-          message: "Email dan password harus diisi",
+          message: 'Email dan password harus diisi',
         })
         .code(400);
     }
 
-    const user = await User.findOne({ email }).select("+password");
+    const user = await User.findOne({ email }).select('+password');
     if (!user) {
       return h
         .response({
-          status: "error",
+          status: 'error',
           data: null,
-          message: "Kredensial tidak valid",
+          message: 'Kredensial tidak valid',
         })
         .code(401);
     }
@@ -91,63 +93,90 @@ export const loginUser = async (request, h) => {
     if (!isMatch) {
       return h
         .response({
-          status: "error",
+          status: 'error',
           data: null,
-          message: "Kredensial tidak valid",
+          message: 'Kredensial tidak valid',
         })
         .code(401);
     }
 
-    const token = generateToken(user._id);
+    const token = generateToken(user._id.toString());
 
-    user.password = undefined;
+    const userObj = {
+      _id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+    };
 
     const response = h.response({
-      status: "success",
-      data: { user },
-      message: "Login berhasil",
+      status: 'success',
+      data: { user: userObj },
+      message: 'Login berhasil',
     });
 
     return setCookieWithToken(response, token);
   } catch (err) {
+    console.error('Login error:', err);
     return errorHandler(request, h, err);
   }
 };
 
 export const logoutUser = (request, h) => {
-  return h
-    .response({
-      status: "success",
-      message: "Logout berhasil",
-    })
-    .unstate("jwt", {
-      path: "/",
-      isSecure: false,
-      isSameSite: "Lax",
-    });
+  try {
+    return h
+      .response({
+        status: 'success',
+        message: 'Logout berhasil',
+      })
+      .unstate('jwt', {
+        path: '/',
+        isSecure: false,
+        isSameSite: 'Lax',
+      });
+  } catch (err) {
+    console.error('Logout error:', err);
+    return errorHandler(request, h, err);
+  }
 };
 
 export const currentUser = async (request, h) => {
   try {
-    const user = await User.findById(request.auth.credentials.id).select("-password -__v");
+    if (!request.auth.credentials || !request.auth.credentials.id) {
+      console.error('Missing auth credentials:', request.auth);
+      return h
+        .response({
+          status: 'error',
+          data: null,
+          message: 'Kredensial tidak valid',
+        })
+        .code(401);
+    }
+
+    const user = await User.findById(request.auth.credentials.id).select('-password -__v');
 
     if (!user) {
       return h
         .response({
-          status: "error",
+          status: 'error',
           data: null,
-          message: "User tidak ditemukan",
+          message: 'User tidak ditemukan',
         })
         .code(404);
     }
 
+    const userObj = {
+      _id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+    };
+
     return h.response({
-      status: "success",
-      data: { user },
-      message: "User data berhasil diambil",
+      status: 'success',
+      data: { user: userObj },
+      message: 'User data berhasil diambil',
     });
   } catch (err) {
-    console.error("currentUser error:", err);
+    console.error('currentUser error:', err);
     return errorHandler(request, h, err);
   }
 };

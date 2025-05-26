@@ -1,12 +1,12 @@
-import jwt from "hapi-auth-jwt2";
-import User from "../models/User.js";
+import jwt from 'hapi-auth-jwt2';
+import User from '../models/User.js';
 
 const plugin = {
-  name: "jwt-auth",
+  name: 'jwt-auth',
   register: async (server) => {
     await server.register(jwt);
 
-    server.auth.strategy("jwt", "jwt", {
+    server.auth.strategy('jwt', 'jwt', {
       key: process.env.JWT_SECRET,
       validate: async (decoded, request, h) => {
         try {
@@ -19,19 +19,17 @@ const plugin = {
             isValid: true,
             credentials: {
               id: user._id,
-              role: user.role,
-              scope: [user.role],
             },
           };
         } catch (err) {
-          console.error("JWT validation error:", err);
+          console.error('JWT validation error:', err);
           return { isValid: false };
         }
       },
-      verifyOptions: { algorithms: ["HS256"] },
-      tokenType: "Bearer",
-      headerKey: "authorization",
-      cookieKey: "jwt",
+      verifyOptions: { algorithms: ['HS256'] },
+      tokenType: 'Bearer',
+      headerKey: 'authorization',
+      cookieKey: 'jwt',
       complete: false,
       keepCredentials: true,
     });

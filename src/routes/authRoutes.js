@@ -1,14 +1,14 @@
-import { registerUser, loginUser, logoutUser, currentUser } from "../controllers/authControllers.js";
-import Joi from "joi";
+import { registerUser, loginUser, logoutUser, currentUser } from '../controllers/authControllers.js';
+import Joi from 'joi';
 
 export default [
   {
-    method: "POST",
-    path: "/api/auth/register",
+    method: 'POST',
+    path: '/api/auth/register',
     options: {
       auth: false,
-      description: "Register a new user",
-      tags: ["api", "auth"],
+      description: 'Register a new user',
+      tags: ['api', 'auth'],
       validate: {
         payload: Joi.object({
           name: Joi.string().required().description("User's full name"),
@@ -19,21 +19,20 @@ export default [
       response: {
         status: {
           201: Joi.object({
-            status: Joi.string().example("success"),
+            status: Joi.string().example('success'),
             data: Joi.object({
               user: Joi.object({
-                _id: Joi.string().description("User ID"),
+                _id: Joi.string().description('User ID'),
                 name: Joi.string().description("User's name"),
                 email: Joi.string().description("User's email"),
-                role: Joi.string().description("User's role"),
               }),
             }),
-            message: Joi.string().example("Registrasi berhasil"),
+            message: Joi.string().example('Registrasi berhasil'),
           }),
           400: Joi.object({
-            status: Joi.string().example("error"),
+            status: Joi.string().example('error'),
             data: Joi.any().allow(null),
-            message: Joi.string().example("Email sudah terdaftar"),
+            message: Joi.string().example('Email sudah terdaftar'),
           }),
         },
       },
@@ -41,12 +40,12 @@ export default [
     },
   },
   {
-    method: "POST",
-    path: "/api/auth/login",
+    method: 'POST',
+    path: '/api/auth/login',
     options: {
       auth: false,
-      description: "User login",
-      tags: ["api", "auth"],
+      description: 'User login',
+      tags: ['api', 'auth'],
       validate: {
         payload: Joi.object({
           email: Joi.string().email().required().description("User's email address"),
@@ -56,21 +55,20 @@ export default [
       response: {
         status: {
           200: Joi.object({
-            status: Joi.string().example("success"),
+            status: Joi.string().example('success'),
             data: Joi.object({
               user: Joi.object({
-                _id: Joi.string().description("User ID"),
+                _id: Joi.string().description('User ID'),
                 name: Joi.string().description("User's name"),
                 email: Joi.string().description("User's email"),
-                role: Joi.string().description("User's role"),
               }),
             }),
-            message: Joi.string().example("Login berhasil"),
+            message: Joi.string().example('Login berhasil'),
           }),
           401: Joi.object({
-            status: Joi.string().example("error"),
+            status: Joi.string().example('error'),
             data: Joi.any().allow(null),
-            message: Joi.string().example("Kredensial tidak valid"),
+            message: Joi.string().example('Kredensial tidak valid'),
           }),
         },
       },
@@ -78,20 +76,20 @@ export default [
     },
   },
   {
-    method: "POST",
-    path: "/api/auth/logout",
+    method: 'POST',
+    path: '/api/auth/logout',
     options: {
       auth: {
-        strategy: "jwt",
-        mode: "required",
+        strategy: 'jwt',
+        mode: 'required',
       },
-      description: "User logout",
-      tags: ["api", "auth"],
+      description: 'User logout',
+      tags: ['api', 'auth'],
       response: {
         status: {
           200: Joi.object({
-            status: Joi.string().example("success"),
-            message: Joi.string().example("Logout berhasil"),
+            status: Joi.string().example('success'),
+            message: Joi.string().example('Logout berhasil'),
           }),
         },
       },
@@ -99,33 +97,32 @@ export default [
     },
   },
   {
-    method: "GET",
-    path: "/api/auth/me",
+    method: 'GET',
+    path: '/api/auth/me',
     options: {
       auth: {
-        strategy: "jwt",
-        mode: "required",
+        strategy: 'jwt',
+        mode: 'required',
       },
-      description: "Get current user details",
-      tags: ["api", "auth"],
+      description: 'Get current user details',
+      tags: ['api', 'auth'],
       response: {
         status: {
           200: Joi.object({
-            status: Joi.string().example("success"),
+            status: Joi.string().example('success'),
             data: Joi.object({
               user: Joi.object({
-                _id: Joi.string().description("User ID"),
+                _id: Joi.string().description('User ID'),
                 name: Joi.string().description("User's name"),
                 email: Joi.string().description("User's email"),
-                role: Joi.string().description("User's role"),
               }),
             }),
-            message: Joi.string().example("User data berhasil diambil"),
+            message: Joi.string().example('User data berhasil diambil'),
           }),
           404: Joi.object({
-            status: Joi.string().example("error"),
+            status: Joi.string().example('error'),
             data: Joi.any().allow(null),
-            message: Joi.string().example("User tidak ditemukan"),
+            message: Joi.string().example('User tidak ditemukan'),
           }),
         },
       },
