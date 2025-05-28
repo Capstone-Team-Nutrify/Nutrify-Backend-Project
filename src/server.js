@@ -4,6 +4,7 @@ import { connectDB } from './config/db.js';
 import { serverConfig } from './config/serverConfig.js';
 import { cookieStrategy } from './config/authConfig.js';
 import authRoutes from './routes/authRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 import cookie from '@hapi/cookie';
 import jwtStrategy from './strategies/jwtStrategy.js';
 import { errorHandlerPlugin } from './utils/errorHandler.js';
@@ -24,7 +25,7 @@ const init = async () => {
   await connectDB();
 
   // Setup Routes
-  server.route([...authRoutes]);
+  server.route([...authRoutes, ...userRoutes]);
 
   // Start Server
   await server.start();
