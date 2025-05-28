@@ -92,7 +92,6 @@
 #### POST /addingredients
 
 - **Request Body**:
-
   ```json
   {
     "food": "example food name",
@@ -128,8 +127,6 @@
   }
   ```
 
-````
-
 #### POST /predict
 
 - **Description**: Get Ingredients Nutritions Classification
@@ -139,20 +136,20 @@
 {
   "makanan": [
     {
-      "bahan" :"kaldu ayam",
-      "dose" : "300", //satuan gram
+      "bahan": "kaldu ayam",
+      "dose": "300" //satuan gram
     },
     {
-      "bahan" :"kaldu ayam",
-      "dose" : "300", //satuan gram
+      "bahan": "kaldu ayam",
+      "dose": "300" //satuan gram
     },
     {
-      "bahan" :"kaldu ayam",
-      "dose" : "300", //satuan gram
+      "bahan": "kaldu ayam",
+      "dose": "300" //satuan gram
     }
   ]
 }
-````
+```
 
 - **Response**:200
 
