@@ -72,28 +72,233 @@
     "age": number,
     "height": number,
     "weight": number,
+    "role": string, // "user", "admin"
     "isVerified": boolean,
-
+    "createdAt": string,
+    "updatedAt": string
 }
 ```
 
 #### GET /profile
 
-- **Description**: Register new User
-- **Auth Required**: Yes
+- **Description**: Get current user profile
+- **Auth Required**: Yes (JWT)
+- **Response**: 200
+
+```json
+{
+  "status": "success",
+  "data": {
+    "userId": "user123",
+    "name": "John Doe",
+    "email": "johndoe@gmail.com",
+    "profilePictureData": "base64string",
+    "profilePictureMimeType": "image/jpeg",
+    "age": 25,
+    "height": 175,
+    "weight": 70,
+    "role": "user",
+    "isVerified": true,
+    "createdAt": "2024-01-15T08:00:00Z"
+  }
+}
+```
+
+#### PUT /profile
+
+- **Description**: Update own profile (User)
+- **Auth Required**: Yes (JWT)
 - **Request Body**:
 
 ```json
-
+{
+  "name": "John Smith",
+  "profilePictureData": "base64string",
+  "profilePictureMimeType": "image/jpeg",
+  "age": 26,
+  "height": 180,
+  "weight": 75
+}
 ```
 
-#### PUT/PATCH /profile
+- **Response**: 200
 
-- **Description**: Update User
+```json
+{
+  "status": "success",
+  "message": "Profile updated successfully",
+  "data": {
+    "userId": "user123",
+    "name": "John Smith",
+    "age": 26,
+    "height": 180,
+    "weight": 75,
+    "updatedAt": "2024-01-15T10:30:00Z"
+  }
+}
+```
 
-#### DELETE /profile
+#### GET /users
 
-- **Description**: Delete User
+- **Description**: Get list of all users (Admin only)
+- **Auth Required**: Yes (JWT)
+- **Role Required**: Admin
+- **Query Parameters**:
+
+  - `page`: number (default: 1)
+  - `limit`: number (default: 10)
+  - `search`: string (optional)
+  - `role`: string (optional)
+
+- **Response**: 200
+
+```json
+{
+  "status": "success",
+  "data": {
+    "users": [
+      {
+        "userId": "user123",
+        "name": "John Doe",
+        "email": "johndoe@gmail.com",
+        "role": "user",
+        "isVerified": true,
+        "createdAt": "2024-01-15T08:00:00Z"
+      }
+    ],
+    "pagination": {
+      "currentPage": 1,
+      "totalPages": 3,
+      "totalItems": 25,
+      "limit": 10
+    }
+  }
+}
+```
+
+#### GET /users/:userId
+
+- **Description**: Get specific user details (Admin only)
+- **Auth Required**: Yes (JWT)
+- **Role Required**: Admin
+- **Response**: 200
+
+```json
+{
+  "status": "success",
+  "data": {
+    "userId": "user123",
+    "name": "John Doe",
+    "email": "johndoe@gmail.com",
+    "age": 25,
+    "height": 175,
+    "weight": 70,
+    "role": "user",
+    "isVerified": true,
+    "createdAt": "2024-01-15T08:00:00Z"
+  }
+}
+```
+
+#### PUT /users/:userId
+
+- **Description**: Update user profile (Admin only)
+- **Auth Required**: Yes (JWT)
+- **Role Required**: Admin
+- **Request Body**:
+
+```json
+{
+  "name": "John Updated",
+  "age": 30,
+  "height": 180,
+  "weight": 80,
+  "role": "admin",
+  "isVerified": true
+}
+```
+
+- **Response**: 200
+
+```json
+{
+  "status": "success",
+  "message": "User updated successfully",
+  "data": {
+    "userId": "user123",
+    "name": "John Updated",
+    "role": "admin",
+    "updatedAt": "2024-01-15T11:00:00Z"
+  }
+}
+```
+
+#### DELETE /users/:userId
+
+- **Description**: Delete user account (Admin only)
+- **Auth Required**: Yes (JWT)
+- **Role Required**: Admin
+- **Response**: 200
+
+```json
+{
+  "status": "success",
+  "message": "User deleted successfully"
+}
+```
+
+#### POST /users/:userId/reset-password
+
+- **Description**: Reset user password (Admin only)
+- **Auth Required**: Yes (JWT)
+- **Role Required**: Admin
+- **Request Body**:
+
+```json
+{
+  "newPassword": "newpassword123"
+}
+```
+
+- **Response**: 200
+
+```json
+{
+  "status": "success",
+  "message": "Password reset successfully",
+  "data": {
+    "userId": "user123",
+    "passwordResetAt": "2024-01-15T11:15:00Z"
+  }
+}
+```
+
+#### PUT /users/:userId/role
+
+- **Description**: Change user role (Admin only)
+- **Auth Required**: Yes (JWT)
+- **Role Required**: Admin
+- **Request Body**:
+
+```json
+{
+  "role": "admin"
+}
+```
+
+- **Response**: 200
+
+```json
+{
+  "status": "success",
+  "message": "User role updated successfully",
+  "data": {
+    "userId": "user123",
+    "role": "admin",
+    "updatedAt": "2024-01-15T11:20:00Z"
+  }
+}
+```
 
 ## Food Collection
 
@@ -202,6 +407,7 @@
 
 #### POST /food
 
+- **Auth Required**: Yes (JWT)
 - **Description**: Submit new food for approval (User) or add directly to database (Admin)
 - **Auth Required**: Yes
 - **Request Body**:
@@ -309,7 +515,8 @@
 #### GET /food/pending
 
 - **Description**: Get list of pending food submissions (Admin only)
-- **Auth Required**: Yes (Admin)
+- **Auth Required**: Yes (JWT)
+- **Role Required**: Admin
 - **Response**: 200
 
 ```json
@@ -332,7 +539,8 @@
 #### PUT /food/:foodId/approve
 
 - **Description**: Approve pending food submission (Admin only)
-- **Auth Required**: Yes (Admin)
+- **Auth Required**: Yes (JWT)
+- **Role Required**: Admin
 - **Response**: 200
 
 ```json
@@ -350,7 +558,8 @@
 #### PUT /food/:foodId/reject
 
 - **Description**: Reject pending food submission (Admin only)
-- **Auth Required**: Yes (Admin)
+- **Auth Required**: Yes (JWT)
+- **Role Required**: Admin
 - **Request Body**:
 
 ```json
