@@ -4,11 +4,11 @@ import { connectDB } from "./config/db.js";
 import { serverConfig } from "./config/serverConfig.js";
 import { cookieStrategy } from "./config/authConfig.js";
 import authRoutes from "./routes/authRoutes.js";
-import { notFoundHandler } from "./utils/responseHandler.js";
 import cookie from "@hapi/cookie";
-import  jwtStrategy  from "./strategies/jwtStrategy.js";
+import jwtStrategy from "./strategies/jwtStrategy.js";
 import { errorHandlerPlugin } from "./utils/errorHandler.js";
-import  swaggerPlugin  from "./plugins/swagger.js";
+import swaggerPlugin from "./plugins/swagger.js";
+import Inert from "@hapi/inert";
 
 const init = async () => {
   const server = Hapi.server(serverConfig);
@@ -18,7 +18,8 @@ const init = async () => {
     cookie,
     jwtStrategy,
     errorHandlerPlugin,
-    swaggerPlugin
+    swaggerPlugin,
+    Inert
   ]);
 
   // Setup Autentikasi
@@ -31,11 +32,6 @@ const init = async () => {
   // Setup Routes
   server.route([
     ...authRoutes,
-    {
-      method: "*",
-      path: "/{any*}",
-      handler: (request, h) => notFoundHandler(request, h),
-    }
   ]);
 
   // Start Server

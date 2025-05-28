@@ -23,12 +23,32 @@ const userSchema = new Schema({
         required: [true, 'password harus diisi'],
         minlength: [6, 'password min 6 karakter']
     },
+    profilePictureData: {
+        type: Buffer, 
+        default: null
+    },
+    profilePictureMimeType: {
+        type: String, 
+        default: null
+    },
+    age: {
+        type: Number,
+        min: [0, 'Usia tidak boleh negatif'],
+        default: null
+    },
+    height: {
+        type: Number, 
+        min: [0, 'Tinggi badan tidak boleh negatif'],
+        default: null
+    },
+    weight: {
+        type: Number,
+        min: [0, 'Berat badan tidak boleh negatif'],
+        default: null
+    },
     isVerified: {
         type: Boolean,
         default: false
-    },
-    EmailVerifiedAt: {
-        type: Date,
     }
 });
 

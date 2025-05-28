@@ -12,6 +12,9 @@ export const serverConfig = {
         console.error("Validation error:", err.message);
         throw err;
       }
+    },
+    payload: {
+      maxBytes: 10 * 1024 * 1024 
     }
   },
   debug: { request: ['error'] }
