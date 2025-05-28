@@ -13,6 +13,9 @@ export const serverConfig = {
         throw err;
       },
     },
+    payload: {
+      maxBytes: 10 * 1024 * 1024,
+    },
   },
   debug: { request: ['error'] },
 };

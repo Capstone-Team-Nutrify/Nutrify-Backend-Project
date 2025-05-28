@@ -11,11 +11,20 @@ const plugin = {
       key: process.env.JWT_SECRET,
       validate: async (decoded, request, h) => {
         try {
-          const user = await User.findById(decoded.id);
-          if (!user) {
+          console.log('JWT validation started for:', decoded);
+
+          if (!decoded || !decoded.id) {
+            console.log('Invalid decoded token - missing id');
             return { isValid: false };
           }
 
+          const user = await User.findById(decoded.id);
+          if (!user) {
+            console.log('User not found for id:', decoded.id);
+            return { isValid: false };
+          }
+
+          console.log('JWT validation successful for user:', user._id);
           return {
             isValid: true,
             credentials: {
@@ -33,6 +42,26 @@ const plugin = {
       cookieKey: 'jwt',
       complete: false,
       keepCredentials: true,
+
+      unauthorizedFunc: (message, scheme, attributes) => {
+        console.log('JWT unauthorized:', { message, scheme, attributes });
+        return {
+          error: 'Unauthorized',
+          message: 'Token tidak valid atau belum login',
+        };
+      },
+    });
+
+    server.events.on('request', (request, event) => {
+      if (event.tags && event.tags.includes('auth')) {
+        console.log('Auth event:', {
+          path: request.path,
+          method: request.method,
+          auth: request.auth,
+          cookies: request.state,
+          timestamp: new Date().toISOString(),
+        });
+      }
     });
   },
 };

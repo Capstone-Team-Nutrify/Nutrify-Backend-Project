@@ -16,12 +16,13 @@ const swaggerPlugin = {
           type: 'apiKey',
           name: 'Authorization',
           in: 'header',
-          description: 'Use format: Bearer {token}',
+          description: "Use format: Bearer {token} (token stored in cookie 'jwt')",
         },
       },
       security: [{ jwt: [] }],
       grouping: 'tags',
       sortEndpoints: 'ordered',
+      tags: [{ name: 'auth', description: 'Endpoints for authentication and user profile management' }],
     };
 
     await server.register([
