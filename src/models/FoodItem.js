@@ -1,13 +1,17 @@
-
+/* eslint-disable camelcase */
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-const BahanSchema = new Schema({
+const BahanSchema = new Schema(
+  {
     nama: String,
-    jumlah: String
-}, { _id: false }); 
+    jumlah: String,
+  },
+  { _id: false }
+);
 
-const VitaminSchema = new Schema({
+const VitaminSchema = new Schema(
+  {
     vitamin_A: Number,
     vitamin_B1: Number,
     vitamin_B2: Number,
@@ -19,19 +23,25 @@ const VitaminSchema = new Schema({
     vitamin_C: Number,
     vitamin_D: Number,
     vitamin_E: Number,
-    vitamin_K: Number
-}, { _id: false });
+    vitamin_K: Number,
+  },
+  { _id: false }
+);
 
-const MineralSchema = new Schema({
+const MineralSchema = new Schema(
+  {
     kalsium: Number,
     zat_besi: Number,
     magnesium: Number,
     fosfor: Number,
     kalium: Number,
-    zinc: Number
-}, { _id: false });
+    zinc: Number,
+  },
+  { _id: false }
+);
 
-const NutrisiSchema = new Schema({
+const NutrisiSchema = new Schema(
+  {
     kalori: Number,
     lemak: Number,
     karbohidrat: Number,
@@ -42,46 +52,53 @@ const NutrisiSchema = new Schema({
     natrium: Number,
     air: Number,
     vitamin: VitaminSchema,
-    mineral: MineralSchema
-}, { _id: false });
+    mineral: MineralSchema,
+  },
+  { _id: false }
+);
 
-const DiseaseRateSchema = new Schema({
+const DiseaseRateSchema = new Schema(
+  {
     penyakit: String,
     peringatan: String,
-    catatan: String
-}, { _id: false });
+    catatan: String,
+  },
+  { _id: false }
+);
 
-const FoodItemSchema = new Schema({
+const FoodItemSchema = new Schema(
+  {
     nama: {
-        type: String,
-        required: true,
-        trim: true
+      type: String,
+      required: true,
+      trim: true,
     },
     asal: {
-        type: String,
-        trim: true
+      type: String,
+      trim: true,
     },
     kategori: {
-        type: String,
-        required: true,
-        enum: ['Makanan', 'Minuman'] 
+      type: String,
+      required: true,
+      enum: ['Makanan', 'Minuman'],
     },
     deskripsi: {
-        type: String,
-        trim: true
+      type: String,
+      trim: true,
     },
     foto_url: {
-        type: String,
-        trim: true
+      type: String,
+      trim: true,
     },
     bahan: [BahanSchema],
     nutrisi_per_100g: NutrisiSchema,
-    disease_rate: [DiseaseRateSchema]
-}, {
-    timestamps: true, 
-    collection: 'makanan dan minuman' 
-});
-
+    disease_rate: [DiseaseRateSchema],
+  },
+  {
+    timestamps: true,
+    collection: 'makanan dan minuman',
+  }
+);
 
 FoodItemSchema.index({ nama: 'text', asal: 'text', kategori: 'text' });
 

@@ -1,5 +1,3 @@
-import { registerUser, loginUser } from '../controllers/authControllers.js';
-import Joi from 'joi';
 import Joi from 'joi';
 import { registerUser, loginUser, logoutUser, currentUser, updateProfile, getProfilePicture } from '../controllers/authControllers.js';
 
