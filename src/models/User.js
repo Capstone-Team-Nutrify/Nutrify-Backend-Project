@@ -1,5 +1,5 @@
+
 import mongoose from 'mongoose';
-import validator from 'validator';
 import bcrypt from 'bcryptjs';
 const { Schema } = mongoose;
 
@@ -69,6 +69,7 @@ userSchema.pre('save', async function () {
 
 userSchema.methods.comparePassword = async function (reqBody) {
   return await bcrypt.compare(reqBody, this.password);
+
 };
 
 const User = mongoose.model('User', userSchema);

@@ -1,6 +1,6 @@
 export const serverConfig = {
   port: process.env.PORT,
-  host: 'localhost',
+  host: process.env.HOST,
   routes: {
     cors: {
       origin: ['*'],
@@ -8,8 +8,11 @@ export const serverConfig = {
       headers: ['Accept', 'Content-Type', 'Authorization'],
     },
     validate: {
-      failAction: (request, h, err) => {
-        console.error('Validation error:', err.message);
+      failAction: async (request, h, err) => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('Validation error details:', err.details);
+        }
+
         throw err;
       },
     },
@@ -17,5 +20,5 @@ export const serverConfig = {
       maxBytes: 10 * 1024 * 1024,
     },
   },
-  debug: { request: ['error'] },
+  debug: process.env.NODE_ENV !== 'production' ? { request: ['error'] } : false,
 };

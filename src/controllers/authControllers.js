@@ -1,3 +1,4 @@
+
 /* eslint-disable no-unused-vars */
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
@@ -11,8 +12,9 @@ const generateToken = (userId) => {
 
 const setCookieWithToken = (h, token) => {
   return h.state('jwt', token, {
+
     ttl: 6 * 24 * 60 * 60 * 1000,
-    isSecure: false,
+    isSecure: process.env.NODE_ENV === 'production',
     isHttpOnly: true,
     encoding: 'none',
     isSameSite: 'Lax',
@@ -24,6 +26,7 @@ export const registerUser = async (request, h) => {
   try {
     const { name, email, password } = request.payload;
 
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return h
@@ -32,14 +35,11 @@ export const registerUser = async (request, h) => {
           message: 'Email sudah terdaftar',
         })
         .code(409);
+
     }
 
-    const user = await User.create({
-      name,
-      email,
-      password,
-    });
-
+   
+    const user = await User.create({ name, email, password, role }); 
     const token = generateToken(user._id.toString());
     const response = h
       .response({
@@ -88,11 +88,13 @@ export const registerUser = async (request, h) => {
         message,
       })
       .code(statusCode);
+
   }
 };
 
 export const loginUser = async (request, h) => {
   try {
+
     const { email, password } = request.payload;
 
     if (!email || !password) {
@@ -123,7 +125,7 @@ export const loginUser = async (request, h) => {
       })
       .code(200);
 
-    return setCookieWithToken(response, token);
+
   } catch (err) {
     console.error('Error:', err);
     const statusCode = err.statusCode || 500;
@@ -155,6 +157,7 @@ export const loginUser = async (request, h) => {
         message,
       })
       .code(statusCode);
+
   }
 };
 
@@ -179,11 +182,13 @@ export const logoutUser = (request, h) => {
         message: err.message || 'Terjadi kesalahan pada server',
       })
       .code(err.statusCode || 500);
+
   }
 };
 
 export const currentUser = async (request, h) => {
   try {
+
     if (!request.auth.credentials?.id) {
       return h
         .response({
