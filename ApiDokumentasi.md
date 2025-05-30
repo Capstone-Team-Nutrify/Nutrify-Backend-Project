@@ -31,7 +31,7 @@
 ```json
 {
   "status": "error",
-  "message": "Inputan harus berupa email, password min 6 karakter, name min 3 karakter"
+  "message": "Invalid request payload input"
 }
 ```
 
@@ -72,7 +72,7 @@
 ```json
 {
     "status": "error",
-    "message": "Email dan Password harus diisi"
+    "message": "Invalid request payload input"
 }
 ```
 
@@ -141,15 +141,6 @@
 }
 ```
 
-- **Response**: 401
-
-```json
-{
-  "status": "fail",
-  "message": "Token tidak valid atau belum login"
-}
-```
-
 
 ### PUT /api/auth/profile
 
@@ -159,6 +150,7 @@
 
 ```json
 {
+  "name": "rawr",
   "profilePicture": "file", // File gambar (JPEG atau PNG, max 5MB)
   "age": 30, // Opsional
   "height": 190, // Opsional
@@ -175,30 +167,22 @@
 }
 ```
 
-- **Response**: 400
+- **Response**: 422
 
 ```json
 {
   "status": "error",
-  "message": "File harus berupa gambar (JPEG atau PNG)"
+  "message": "Tipe file tidak valid. Hanya file JPEG dan PNG yang diizinkan"
 }
 ```
 
-- **Response**: 401
-
-```json
-{
-    "status": "error",
-    "message": "Token tidak valid atau belum login"
-}
-```
 
 - **Response**: 413
 
 ```json
 {
   "status": "error",
-  "message": "Ukuran file tidak boleh lebih dari 5MB"
+  "message": "Ukuran payload atau file terlalu besar dari yang diizinkan"
 }
 ```
 
@@ -214,14 +198,6 @@
   - **Body**: Data biner gambar
 
 
-- **Response**: 401
-
-```json
-{
-  "status": "error",
-  "message": "Token tidak valid atau belum login"
-}
-```
 
 - **Response**: 404
 

@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import Boom from "@hapi/boom";
 
 const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
@@ -8,10 +9,10 @@ const generateToken = (userId) => {
   });
 };
 
-const setCookieWithToken = (h, token) => {
+const setJwtCookie = (h, token) => {
   return h.state("jwt", token, {
     ttl: 6 * 24 * 60 * 60 * 1000,
-    isSecure: false,
+    isSecure: process.env.NODE_ENV === 'production',
     isHttpOnly: true,
     encoding: "none",
     isSameSite: "Lax",
@@ -23,77 +24,49 @@ export const registerUser = async (request, h) => {
   try {
     const { name, email, password } = request.payload;
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return h.response({
-        status: "error",
-        message: "Email sudah terdaftar"
-      }).code(409);
+    
+    const userCount = await User.countDocuments();
+    let role = 'user';
+    if (userCount === 0) {
+      
+      role = 'admin';
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`Registrasi pengguna pertama (${email}) sebagai admin.`);
+      }
     }
 
-    const user = await User.create({ 
-      name, 
-      email, 
-      password 
-    });
-
+   
+    const user = await User.create({ name, email, password, role }); 
     const token = generateToken(user._id.toString());
+    
     const response = h.response({
       status: "success",
-      message: "Registrasi berhasil"
+      message: "Registrasi berhasil" + (role === 'admin' ? ' sebagai admin.' : '.'), 
     }).code(201);
-    return setCookieWithToken(response, token);
+    
+    setJwtCookie(response, token);
+    return response;
 
   } catch (err) {
-    if (err.name === 'ValidationError') {
-      return h.response({
-        status: "error",
-        message: "Inputan harus berupa email, password min 6 karakter, name min 3 karakter"
-      }).code(400);
+    if (err.isBoom) {
+        throw err;
     }
-
-    console.error('Error:', err);
-    let statusCode = err.statusCode || 500;
-    let message = err.message || 'Terjadi kesalahan pada server';
-
-    if (err.name === 'JsonWebTokenError') {
-      return h.response({
-        status: "error",
-        message: "Token tidak valid atau belum login"
-      }).code(401).unstate('jwt');
+    if (err.code === 11000) {
+        throw Boom.conflict('Email yang Anda masukkan sudah terdaftar.');
     }
-
-    if (err.name === 'TokenExpiredError') {
-      return h.response({
-        status: "error",
-        message: "Token sudah kedaluwarsa"
-      }).code(401).unstate('jwt');
-    }
-
-    return h.response({
-      status: "error",
-      message
-    }).code(statusCode);
+    console.error('Error registrasi:', err.message);
+    throw Boom.internal('Terjadi kesalahan pada server saat registrasi.');
   }
 };
 
 export const loginUser = async (request, h) => {
   try {
-    const { email, password } = request.payload;
 
-    if (!email || !password) {
-      return h.response({
-        status: "error",
-        message: "Email dan password harus diisi"
-      }).code(400);
-    }
+    const { email, password } = request.payload;
 
     const user = await User.findOne({ email }).select("+password");
     if (!user || !(await bcrypt.compare(password, user.password))) {
-      return h.response({
-        status: "error",
-        message: "Email atau password salah"
-      }).code(401);
+      throw Boom.unauthorized('Email atau password salah.');
     }
 
     const token = generateToken(user._id.toString());
@@ -103,141 +76,156 @@ export const loginUser = async (request, h) => {
       accessToken: token
     }).code(200);
     
-    return setCookieWithToken(response, token);
+    setJwtCookie(response, token);
+    return response;
+
   } catch (err) {
-    console.error('Error:', err);
-    let statusCode = err.statusCode || 500;
-    let message = err.message || 'Terjadi kesalahan pada server';
-
-    if (err.name === 'JsonWebTokenError') {
-      return h.response({
-        status: "error",
-        message: "Token tidak valid"
-      }).code(401).unstate('jwt');
-    }
-
-    if (err.name === 'TokenExpiredError') {
-      return h.response({
-        status: "error",
-        message: "Token sudah kedaluwarsa"
-      }).code(401).unstate('jwt');
-    }
-
-    return h.response({
-      status: "error",
-      message
-    }).code(statusCode);
+    if (err.isBoom) throw err;
+    console.error('Error login:', err.message);
+    throw Boom.internal('Terjadi kesalahan pada server saat login.');
   }
 };
 
 export const logoutUser = (request, h) => {
   try {
-    return h.response({
+    const response = h.response({
       status: "success",
       message: "Logout berhasil"
-    }).code(200).unstate("jwt", {
+    }).code(200);
+    
+    response.unstate("jwt", {
       path: "/",
-      isSecure: false,
+      isSecure: process.env.NODE_ENV === 'production',
       isSameSite: "Lax",
     });
+    return response;
+
   } catch (err) {
-    console.error('Error:', err);
-    return h.response({
-      status: "error",
-      message: err.message || 'Terjadi kesalahan pada server'
-    }).code(err.statusCode || 500);
+    console.error('Error logout:', err.message);
+    throw Boom.internal('Terjadi kesalahan pada server saat logout.');
   }
 };
 
 export const currentUser = async (request, h) => {
   try {
-    if (!request.auth.credentials?.id) {
-      return h.response({
-        status: "error",
-        message: "Kredensial tidak valid atau belum login"
-      }).code(401);
+    const userId = request.auth.credentials.id;
+    
+    const user = await User.findById(userId).select("-password -__v");
+    if (!user) {
+      
+      throw Boom.notFound("Pengguna tidak ditemukan.");
     }
 
-    const user = await User.findById(request.auth.credentials.id)
-      .select("-password -__v");
-
     return h.response({
+      status: "success",
       user: {
         _id: user._id.toString(),
         name: user.name,
         email: user.email,
-        hasProfilePicture: user.profilePictureData ? true : false,
+        hasProfilePicture: !!user.profilePictureData,
         age: user.age || null,
         height: user.height || null,
         weight: user.weight || null,
+        createdAt: user.createdAt ? user.createdAt.toISOString() : null,
+        updatedAt: user.updatedAt ? user.updatedAt.toISOString() : null
       }
     }).code(200);
+
   } catch (err) {
-    console.error('Error:', err);
-    return h.response({
-      status: "error",
-      message: err.message || 'Terjadi kesalahan pada server'
-    }).code(err.statusCode || 500);
+    if (err.isBoom) throw err;
+    console.error('Error mendapatkan current user:', err.message);
+    throw Boom.internal('Terjadi kesalahan pada server.');
   }
 };
 
 export const updateProfile = async (request, h) => {
   try {
-    if (!request.auth.credentials?.id) {
-      return h.response({
-        status: "error",
-        message: "Kredensial tidak valid atau belum login"
-      }).code(401);
-    }
-
     const userId = request.auth.credentials.id;
     const { age, height, weight, profilePicture } = request.payload;
-
-    let user = await User.findById(userId);
-
+    
     const updateData = {};
-    if (age !== undefined) updateData.age = parseInt(age);
-    if (height !== undefined) updateData.height = parseFloat(height);
-    if (weight !== undefined) updateData.weight = parseFloat(weight);
+
+    if (age !== undefined) updateData.age = age;
+    if (height !== undefined) updateData.height = height;
+    if (weight !== undefined) updateData.weight = weight;
 
     if (profilePicture && profilePicture.hapi) {
       const allowedTypes = ['image/jpeg', 'image/png'];
-      if (!allowedTypes.includes(profilePicture.hapi.headers['content-type'])) {
-        return h.response({
-          status: "error",
-          message: "File harus berupa gambar (JPEG atau PNG)"
-        }).code(400);
+      const fileMimeType = profilePicture.hapi.headers['content-type'];
+
+      if (!allowedTypes.includes(fileMimeType)) {
+        throw Boom.badData("Tipe file tidak valid. Hanya file JPEG dan PNG yang diizinkan.");
       }
 
       const maxFileSize = 5 * 1024 * 1024;
       const chunks = [];
       for await (const chunk of profilePicture) {
         chunks.push(chunk);
+        if (Buffer.concat(chunks).length > maxFileSize) {
+            profilePicture.destroy();
+            throw Boom.entityTooLarge("Ukuran file profil tidak boleh melebihi 5MB.");
+        }
       }
       const buffer = Buffer.concat(chunks);
+      
       if (buffer.length > maxFileSize) {
-        return h.response({
-          status: "error",
-          message: "Ukuran file tidak boleh melebihi 5MB"
-        }).code(413);
+        throw Boom.entityTooLarge("Ukuran file profil tidak boleh melebihi 5MB.");
       }
 
       updateData.profilePictureData = buffer;
-      updateData.profilePictureMimeType = profilePicture.hapi.headers['content-type'];
+      updateData.profilePictureMimeType = fileMimeType;
+    } else if (profilePicture === null || profilePicture === '') {
+      updateData.profilePictureData = null;
+      updateData.profilePictureMimeType = null;
     }
 
-    await User.findByIdAndUpdate(userId, { $set: updateData });
+    if (Object.keys(updateData).length === 0 && !(profilePicture === null || profilePicture === '')) {
+
+        const currentUserData = await User.findById(userId).select("name age height weight updatedAt");
+        if (!currentUserData) {
+            throw Boom.notFound("Pengguna tidak ditemukan.");
+        }
+        return h.response({
+            status: "success", 
+            message: "Tidak ada data profil yang diubah.",
+            data: {
+                userId: currentUserData._id.toString(),
+                name: currentUserData.name,
+                age: currentUserData.age || null,
+                height: currentUserData.height || null,
+                weight: currentUserData.weight || null,
+                updatedAt: currentUserData.updatedAt.toISOString()
+            }
+        }).code(200);
+    }
+
+
+    const updatedUser = await User.findByIdAndUpdate(userId, { $set: updateData }, { new: true })
+                                .select("name age height weight updatedAt"); 
+    if (!updatedUser) {
+        throw Boom.notFound("Pengguna tidak ditemukan untuk diupdate.");
+    }
 
     return h.response({
       status: "success",
-      message: "Profil berhasil diperbarui"
+      message: "Profile updated successfully", 
+      data: { 
+          userId: updatedUser._id.toString(),
+          name: updatedUser.name,
+          age: updatedUser.age,
+          height: updatedUser.height,
+          weight: updatedUser.weight,
+          updatedAt: updatedUser.updatedAt.toISOString() 
+      }
     }).code(200);
+
   } catch (err) {
-    console.error('Error:', err);
-    return h.response({
-      status: "error",
-      message: err.message || 'Terjadi kesalahan pada server'
-    }).code(err.statusCode || 500);
+    if (err.isBoom) throw err;
+    console.error('Error update profile:', err.message);
+    if (err.output && err.output.statusCode === 413) {
+        throw Boom.entityTooLarge("Ukuran file profil tidak boleh melebihi 5MB.");
+    }
+    throw Boom.internal('Terjadi kesalahan pada server saat memperbarui profil.');
   }
 };
 
@@ -247,21 +235,16 @@ export const getProfilePicture = async (request, h) => {
     const user = await User.findById(userId)
       .select("profilePictureData profilePictureMimeType");
 
-    if (!user?.profilePictureData) {
-      return h.response({
-        status: "error",
-        message: "Gambar profil tidak ditemukan"
-      }).code(404);
+    if (!user || !user.profilePictureData || !user.profilePictureMimeType) {
+      throw Boom.notFound("Gambar profil tidak ditemukan.");
     }
 
     return h.response(user.profilePictureData)
       .type(user.profilePictureMimeType)
-      .header("Content-Length", user.profilePictureData.length);
+      .header("Content-Length", user.profilePictureData.length.toString());
   } catch (err) {
-    console.error('Error:', err);
-    return h.response({
-      status: "error",
-      message: err.message || 'Terjadi kesalahan pada server'
-    }).code(err.statusCode || 500);
+    if (err.isBoom) throw err;
+    console.error('Error mengambil gambar profil:', err.message);
+    throw Boom.internal('Terjadi kesalahan pada server.');
   }
 };
