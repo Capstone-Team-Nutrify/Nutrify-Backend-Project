@@ -311,6 +311,18 @@
     "description": string,
     "imageUrl": string,
     "category": string,
+        "ingredients": [
+        {
+            "ingredientAlias": "daging sapi mentah",
+            "ingredientName": "Daging Sapi",
+            "ingredientDose": "1000" // gram
+        },
+        {
+            "ingredientAlias": "bawang putih",
+            "ingredientName": "Bawang Putih",
+            "ingredientDose": "100" // gram
+        },
+    ],
     "nutritionPer100g": {
         "kalori": number,
         "lemak": number,
@@ -340,13 +352,40 @@
         "kalium": number,
         "zinc": number
     },
-    "ingredients": [
-        {
-            "ingredientAlias": string,
-            "ingredientName": string,
-            "ingredientDose": string
-        }
-    ],
+    "diesease rate": {
+    "nama_makanan": "daging sapi mentah, bawang putih",
+    "prediction": {
+      "error": false,
+      "message": "Prediksi berhasil",
+      "predictions": {
+        "Influenza": "Netral",
+        "Liver": "Netral",
+        "Diabetes": "Waspada",
+        "Anemia": "Netral",
+        "Diare": "Netral",
+        "Batu_Ginjal": "Waspada",
+        "Asma": "Netral",
+        "Asam_Lambung": "Waspada",
+        "Serangan_Jantung": "Waspada",
+        "Asam_Urat": "Waspada",
+        "Radang_Paru_paru": "Waspada",
+        "Jerawat": "Waspada",
+        "Hepatitis": "Netral",
+        "Wasir": "Netral",
+        "Sinusitis": "Netral",
+        "Kolesterol": "Netral",
+        "Usus_Buntu": "Netral",
+        "Tifus": "Netral",
+        "Osteoporosis": "Netral",
+        "Malaria": "Netral",
+        "Alergi_Dingin": "Netral",
+        "Alergi_Kacang": "Netral",
+        "Alergi_Seafood": "Netral",
+        "Alergi_Susu": "Netral",
+        "Alergi_Telur_Ayam": "Netral",
+        "Alergi_Buah_Beri": "Konsumsi Wajar"
+      }
+    },
     "status": string, // "pending", "approved", "rejected"
     "submittedBy": string, // userId
     "submittedAt": string,
