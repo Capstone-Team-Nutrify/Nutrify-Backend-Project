@@ -1,4 +1,3 @@
-
 import User from "../models/User.js";
 import Boom from "@hapi/boom";
 
@@ -33,7 +32,7 @@ export const getAllUsers = async (request, h) => {
             email: user.email,
             role: user.role,
             isVerified: user.isVerified,
-            createdAt: user.createdAt.toISOString()
+            createdAt: user.createdAt ? user.createdAt.toISOString() : null
         }));
 
         return h.response({
@@ -53,47 +52,64 @@ export const getAllUsers = async (request, h) => {
         if (err.isBoom) {
             throw err;
         }
-        console.error("Error getting all users:", err.message);
+        console.error("Error getting all users:", err.message, err.stack);
         throw Boom.internal("Terjadi kesalahan pada server saat mengambil daftar pengguna.");
     }
 };
 
-export const promoteUserToAdmin = async (request, h) => {
+export const changeUserRole = async (request, h) => {
     try {
         if (request.auth.credentials.role !== 'admin') {
             throw Boom.forbidden('Akses ditolak. Hanya admin yang dapat melakukan aksi ini.');
         }
 
-        const { userIdToPromote } = request.params; 
+        const { userIdToChange } = request.params;
+        const { newRole } = request.payload;
 
-        const userToPromote = await User.findById(userIdToPromote);
-        if (!userToPromote) {
-            throw Boom.notFound('Pengguna yang akan dipromosikan tidak ditemukan.');
+        const adminMakingRequest = request.auth.credentials.id;
+
+        const allowedRoles = ['user', 'moderator', 'admin'];
+        if (!allowedRoles.includes(newRole)) {
+            throw Boom.badRequest(`Role target tidak valid. Pilih dari: ${allowedRoles.join(', ')}`);
         }
 
-        if (userToPromote.role === 'admin') {
+        const userToChange = await User.findById(userIdToChange);
+        if (!userToChange) {
+            throw Boom.notFound('Pengguna yang akan diubah rolenya tidak ditemukan.');
+        }
+
+        if (userToChange._id.toString() === adminMakingRequest) {
+            throw Boom.badRequest('Admin tidak dapat mengubah role dirinya sendiri melalui endpoint ini.');
+        }
+        
+        if (userToChange.role === newRole) {
             return h.response({
-                status: "success", 
-                message: 'Pengguna ini sudah menjadi admin.'
-            }).code(200); 
+                status: "info",
+                message: `Pengguna sudah memiliki role '${newRole}'. Tidak ada perubahan.`
+            }).code(200);
+        }
+        
+        if (userToChange.role === 'admin' && newRole !== 'admin') {
+            throw Boom.forbidden('Admin tidak dapat menurunkan role admin lain melalui endpoint ini.');
         }
 
-        userToPromote.role = 'admin';
-        await userToPromote.save();
+        userToChange.role = newRole;
+        await userToChange.save();
 
         return h.response({
             status: "success",
-            message: `Pengguna ${userToPromote.name} berhasil dipromosikan menjadi admin.`
+            message: `Role pengguna ${userToChange.name} berhasil diubah menjadi ${newRole}.`
         }).code(200);
 
     } catch (err) {
         if (err.isBoom) {
             throw err;
         }
-        console.error("Error promoting user:", err.message);
-        throw Boom.internal("Terjadi kesalahan pada server saat mempromosikan pengguna.");
+        console.error("Error changing user role:", err.message, err.stack);
+        throw Boom.internal("Terjadi kesalahan pada server saat mengubah role pengguna.");
     }
 };
+
 
 export const deleteUserByAdmin = async (request, h) => {
     try {
@@ -102,7 +118,7 @@ export const deleteUserByAdmin = async (request, h) => {
         }
 
         const adminMakingRequest = request.auth.credentials.id;
-        const { userIdToDelete } = request.params; 
+        const { userIdToDelete } = request.params;
 
         if (adminMakingRequest === userIdToDelete) {
             throw Boom.badRequest('Admin tidak dapat menghapus akunnya sendiri melalui endpoint ini.');
@@ -128,7 +144,7 @@ export const deleteUserByAdmin = async (request, h) => {
         if (err.isBoom) {
             throw err;
         }
-        console.error("Error deleting user by admin:", err.message);
+        console.error("Error deleting user by admin:", err.message, err.stack);
         throw Boom.internal("Terjadi kesalahan pada server saat menghapus pengguna.");
     }
 };

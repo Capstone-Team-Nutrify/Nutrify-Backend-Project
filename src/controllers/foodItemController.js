@@ -1,11 +1,8 @@
-
 import FoodItem from '../models/FoodItem.js';
+import PendingFoodItem from '../models/PendingFoodItem.js';
 import Boom from '@hapi/boom';
-import mongoose from 'mongoose'; 
+import mongoose from 'mongoose';
 
-/**
- * Mendapatkan semua daftar makanan dan minuman dengan paginasi.
- */
 export const getAllFoodItems = async (request, h) => {
     try {
         const page = parseInt(request.query.page, 10) || 1;
@@ -18,7 +15,7 @@ export const getAllFoodItems = async (request, h) => {
             query = { nama: { $regex: searchQuery, $options: 'i' } };
         }
 
-        const foodItemsQuery = FoodItem.find(query)
+        const foodItemsQuery = FoodItem.find(query) 
             .sort({ nama: 1 })
             .skip(skip)
             .limit(limit);
@@ -56,14 +53,11 @@ export const getAllFoodItems = async (request, h) => {
         }).code(200);
 
     } catch (err) {
-        console.error("Error getting all food items:", err.message, err.stack); 
+        console.error("Error getting all food items:", err.message, err.stack);
         throw Boom.internal("Terjadi kesalahan pada server saat mengambil data.");
     }
 };
 
-/**
- * Mendapatkan detail makanan atau minuman berdasarkan ID.
- */
 export const getFoodItemById = async (request, h) => {
     try {
         const { id } = request.params;
@@ -72,7 +66,7 @@ export const getFoodItemById = async (request, h) => {
             throw Boom.badRequest('Format ID tidak valid.');
         }
 
-        const foodItem = await FoodItem.findById(id);
+        const foodItem = await FoodItem.findById(id); 
 
         if (!foodItem) {
             throw Boom.notFound('Makanan atau minuman tidak ditemukan.');
@@ -88,7 +82,6 @@ export const getFoodItemById = async (request, h) => {
             bahan: foodItem.bahan,
             nutrisi_per_100g: foodItem.nutrisi_per_100g,
             disease_rate: foodItem.disease_rate,
-            
             createdAt: foodItem.createdAt ? foodItem.createdAt.toISOString() : null,
             updatedAt: foodItem.updatedAt ? foodItem.updatedAt.toISOString() : null
         };
@@ -103,7 +96,71 @@ export const getFoodItemById = async (request, h) => {
         if (err.isBoom) {
             throw err;
         }
-        console.error("Error getting food item by ID:", err.message, err.stack); 
+        console.error("Error getting food item by ID:", err.message, err.stack);
         throw Boom.internal("Terjadi kesalahan pada server saat mengambil data.");
+    }
+};
+
+export const createFoodItem = async (request, h) => {
+    try {
+        const userId = request.auth.credentials.id;
+        const userRole = request.auth.credentials.role;
+        const payload = request.payload;
+
+        const foodData = {
+            nama: payload.name,
+            kategori: payload.category,
+            deskripsi: payload.description,
+            foto_url: payload.imageUrl,
+            bahan: payload.ingredients.map(ing => ({
+                nama: ing.ingredientName,
+                jumlah: ing.ingredientDose,
+                alias: ing.ingredientAlias
+            })),
+            nutrisi_per_100g: payload.nutritionPer100g,
+        };
+
+        if (userRole === 'admin' || userRole === 'moderator') {
+            const newFoodItem = new FoodItem(foodData);
+            await newFoodItem.save();
+
+            return h.response({
+                status: "success",
+                message: "Food added successfully",
+                data: {
+                    foodId: newFoodItem._id.toString(),
+                    status: "approved",
+                    submittedAt: newFoodItem.createdAt.toISOString()
+                }
+            }).code(201);
+
+        } else {
+            const newPendingFoodItem = new PendingFoodItem({
+                ...foodData,
+                submittedBy: userId,
+                status: 'pending'
+            });
+            await newPendingFoodItem.save();
+
+            return h.response({
+                status: "success",
+                message: "Food submitted for approval",
+                data: {
+                    foodId: newPendingFoodItem._id.toString(),
+                    status: "pending",
+                    submittedAt: newPendingFoodItem.createdAt.toISOString()
+                }
+            }).code(201);
+        }
+
+    } catch (err) {
+        if (err.isBoom) {
+            throw err;
+        }
+        if (err.code === 11000) {
+            throw Boom.conflict('Data makanan dengan nama ini mungkin sudah ada atau sedang diajukan.');
+        }
+        console.error("Error creating food item:", err.message, err.stack);
+        throw Boom.internal("Terjadi kesalahan pada server saat menambahkan data makanan.");
     }
 };

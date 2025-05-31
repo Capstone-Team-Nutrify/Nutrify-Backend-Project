@@ -12,7 +12,6 @@ export const serverConfig = {
         if (process.env.NODE_ENV !== 'production') {
           console.error("Validation error details:", err.details);
         }
-
         throw err;
       }
     },

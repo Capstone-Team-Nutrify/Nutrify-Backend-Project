@@ -21,7 +21,7 @@ const plugin = {
             return { isValid: false };
           }
 
-          const user = await User.findById(decoded.id).select('+role'); 
+          const user = await User.findById(decoded.id).select('+role');
           if (!user) {
             if (process.env.NODE_ENV !== 'production') {
               console.log("JWT validation: User not found for id:", decoded.id);
@@ -36,8 +36,7 @@ const plugin = {
             isValid: true,
             credentials: {
               id: user._id.toString(),
-              role: user.role, 
-            
+              role: user.role,
             },
           };
         } catch (err) {

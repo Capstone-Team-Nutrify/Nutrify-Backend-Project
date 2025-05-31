@@ -1,4 +1,3 @@
-
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 const { Schema } = mongoose;
@@ -15,10 +14,10 @@ const userSchema = new Schema({
         type: String,
         select: false
     },
-    role: { 
+    role: {
         type: String,
-        enum: ['user', 'admin'], 
-        default: 'user' 
+        enum: ['user', 'moderator', 'admin'],
+        default: 'user'
     },
     profilePictureData: {
         type: Buffer,
@@ -40,11 +39,11 @@ const userSchema = new Schema({
         type: Number,
         default: null
     },
-    isVerified: { 
+    isVerified: {
         type: Boolean,
         default: false
     }
-}, { timestamps: true }); 
+}, { timestamps: true });
 
 userSchema.pre("save", async function (next) {
     if (!this.isModified('password')) return next();

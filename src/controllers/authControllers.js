@@ -24,24 +24,21 @@ export const registerUser = async (request, h) => {
   try {
     const { name, email, password } = request.payload;
 
-    
     const userCount = await User.countDocuments();
     let role = 'user';
     if (userCount === 0) {
-      
       role = 'admin';
       if (process.env.NODE_ENV !== 'production') {
         console.log(`Registrasi pengguna pertama (${email}) sebagai admin.`);
       }
     }
 
-   
-    const user = await User.create({ name, email, password, role }); 
+    const user = await User.create({ name, email, password, role });
     const token = generateToken(user._id.toString());
     
     const response = h.response({
       status: "success",
-      message: "Registrasi berhasil" + (role === 'admin' ? ' sebagai admin.' : '.'), 
+      message: "Registrasi berhasil" + (role === 'admin' ? ' sebagai admin.' : '.'),
     }).code(201);
     
     setJwtCookie(response, token);
@@ -54,14 +51,13 @@ export const registerUser = async (request, h) => {
     if (err.code === 11000) {
         throw Boom.conflict('Email yang Anda masukkan sudah terdaftar.');
     }
-    console.error('Error registrasi:', err.message);
+    console.error('Error registrasi:', err.message, err.stack);
     throw Boom.internal('Terjadi kesalahan pada server saat registrasi.');
   }
 };
 
 export const loginUser = async (request, h) => {
   try {
-
     const { email, password } = request.payload;
 
     const user = await User.findOne({ email }).select("+password");
@@ -81,7 +77,7 @@ export const loginUser = async (request, h) => {
 
   } catch (err) {
     if (err.isBoom) throw err;
-    console.error('Error login:', err.message);
+    console.error('Error login:', err.message, err.stack);
     throw Boom.internal('Terjadi kesalahan pada server saat login.');
   }
 };
@@ -101,7 +97,7 @@ export const logoutUser = (request, h) => {
     return response;
 
   } catch (err) {
-    console.error('Error logout:', err.message);
+    console.error('Error logout:', err.message, err.stack);
     throw Boom.internal('Terjadi kesalahan pada server saat logout.');
   }
 };
@@ -109,10 +105,9 @@ export const logoutUser = (request, h) => {
 export const currentUser = async (request, h) => {
   try {
     const userId = request.auth.credentials.id;
-    
     const user = await User.findById(userId).select("-password -__v");
+                                                                      
     if (!user) {
-      
       throw Boom.notFound("Pengguna tidak ditemukan.");
     }
 
@@ -122,10 +117,13 @@ export const currentUser = async (request, h) => {
         _id: user._id.toString(),
         name: user.name,
         email: user.email,
+        role: user.role,
         hasProfilePicture: !!user.profilePictureData,
+        profilePictureMimeType: user.profilePictureMimeType || null,
         age: user.age || null,
         height: user.height || null,
         weight: user.weight || null,
+        isVerified: user.isVerified,
         createdAt: user.createdAt ? user.createdAt.toISOString() : null,
         updatedAt: user.updatedAt ? user.updatedAt.toISOString() : null
       }
@@ -133,7 +131,7 @@ export const currentUser = async (request, h) => {
 
   } catch (err) {
     if (err.isBoom) throw err;
-    console.error('Error mendapatkan current user:', err.message);
+    console.error('Error mendapatkan current user:', err.message, err.stack);
     throw Boom.internal('Terjadi kesalahan pada server.');
   }
 };
@@ -180,13 +178,12 @@ export const updateProfile = async (request, h) => {
     }
 
     if (Object.keys(updateData).length === 0 && !(profilePicture === null || profilePicture === '')) {
-
         const currentUserData = await User.findById(userId).select("name age height weight updatedAt");
         if (!currentUserData) {
             throw Boom.notFound("Pengguna tidak ditemukan.");
         }
         return h.response({
-            status: "success", 
+            status: "success",
             message: "Tidak ada data profil yang diubah.",
             data: {
                 userId: currentUserData._id.toString(),
@@ -199,29 +196,28 @@ export const updateProfile = async (request, h) => {
         }).code(200);
     }
 
-
     const updatedUser = await User.findByIdAndUpdate(userId, { $set: updateData }, { new: true })
-                                .select("name age height weight updatedAt"); 
+                                .select("name age height weight updatedAt");
     if (!updatedUser) {
         throw Boom.notFound("Pengguna tidak ditemukan untuk diupdate.");
     }
 
     return h.response({
       status: "success",
-      message: "Profile updated successfully", 
-      data: { 
+      message: "Profile updated successfully",
+      data: {
           userId: updatedUser._id.toString(),
           name: updatedUser.name,
           age: updatedUser.age,
           height: updatedUser.height,
           weight: updatedUser.weight,
-          updatedAt: updatedUser.updatedAt.toISOString() 
+          updatedAt: updatedUser.updatedAt.toISOString()
       }
     }).code(200);
 
   } catch (err) {
     if (err.isBoom) throw err;
-    console.error('Error update profile:', err.message);
+    console.error('Error update profile:', err.message, err.stack);
     if (err.output && err.output.statusCode === 413) {
         throw Boom.entityTooLarge("Ukuran file profil tidak boleh melebihi 5MB.");
     }
@@ -244,7 +240,7 @@ export const getProfilePicture = async (request, h) => {
       .header("Content-Length", user.profilePictureData.length.toString());
   } catch (err) {
     if (err.isBoom) throw err;
-    console.error('Error mengambil gambar profil:', err.message);
+    console.error('Error mengambil gambar profil:', err.message, err.stack);
     throw Boom.internal('Terjadi kesalahan pada server.');
   }
 };

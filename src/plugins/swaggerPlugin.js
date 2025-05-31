@@ -1,5 +1,5 @@
-import Inert from "@hapi/inert"; 
-import Vision from "@hapi/vision"; 
+import Inert from "@hapi/inert";
+import Vision from "@hapi/vision";
 import HapiSwagger from "hapi-swagger";
 
 const swaggerPlugin = {
@@ -9,24 +9,24 @@ const swaggerPlugin = {
       info: {
         title: "Nutrify API Documentation",
         version: "1.0.0",
-        description: "Dokumentasi API untuk aplikasi Nutrify. Token JWT akan di-set sebagai cookie 'jwt' saat login dan dapat juga dikirim via header 'Authorization: Bearer {token}'.",
+        description: "Dokumentasi API untuk aplikasi Nutrify...",
       },
       securityDefinitions: {
         jwt: {
           type: "apiKey",
-          name: "Authorization", 
+          name: "Authorization",
           in: "header",
-          description: "Masukkan token JWT dengan format: Bearer {token}. Cookie 'jwt' juga akan dibaca otomatis.",
+          description: "Masukkan token JWT dengan format: Bearer {token}...",
         },
       },
-      security: [{ jwt: [] }], 
+      security: [{ jwt: [] }],
       grouping: "tags",
       sortEndpoints: "ordered",
       tags: [
         { name: "auth", description: "Endpoint untuk autentikasi dan manajemen profil pengguna" },
-        { name: "admin", description: "Endpoint khusus untuk administrasi (membutuhkan hak admin)" },
-        { name: "food-items", description: "Endpoint untuk makanan dan minuman" } 
-       
+        { name: "admin", description: "Endpoint khusus untuk administrasi (Admin only)" },
+        { name: "food-items", description: "Endpoint untuk makanan dan minuman publik" },
+        { name: "moderation", description: "Endpoint untuk moderasi konten makanan (Admin/Moderator only)" }
       ],
     };
 
