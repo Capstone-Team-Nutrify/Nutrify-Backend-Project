@@ -1,0 +1,34 @@
+import FoodItem from "../models/FoodItem.js";
+
+export const getRandomItems = async (request, h) => {
+  try {
+    const randomItems = await FoodItem.aggregate([
+      { $match: { isPublic: true } },
+      { $sample: { size: 10 } },
+    ]);
+
+    if (!randomItems || randomItems.length === 0) {
+      return h
+        .response({
+          success: false,
+          message: "No food items found",
+        })
+        .code(404);
+    }
+
+    return h
+      .response({
+        success: true,
+        data: randomItems,
+      })
+      .code(200);
+  } catch (error) {
+    return h
+      .response({
+        success: false,
+        message: "Error fetching random items",
+        error: error.message,
+      })
+      .code(500);
+  }
+};
