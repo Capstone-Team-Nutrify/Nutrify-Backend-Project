@@ -8,10 +8,13 @@ import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import foodItemRoutes from "./routes/FoodItemRoutes.js";
 import moderationRoutes from "./routes/moderationRoutes.js";
+import randomItemRoutes from "./routes/randomItemRoutes.js";
 import cookie from "@hapi/cookie";
 import jwtAuthStrategyPlugin from "./plugins/jwtAuthStrategyPlugin.js";
 import { errorHandlerPlugin } from "./plugins/errorHandlerPlugin.js";
 import swaggerPlugin from "./plugins/swaggerPlugin.js";
+import displayItemRoutes from "./routes/displayItemRoutes.js";
+import { indexRoutes } from "./routes/indexRoutes.js";
 
 const init = async () => {
   const server = Hapi.server(serverConfig);
@@ -33,10 +36,13 @@ const init = async () => {
 
   // Setup Routes
   server.route([
+    ...indexRoutes,
     ...authRoutes,
     ...adminRoutes,
     ...foodItemRoutes,
     ...moderationRoutes,
+    ...randomItemRoutes,
+    ...displayItemRoutes,
   ]);
 
   // Start Server
