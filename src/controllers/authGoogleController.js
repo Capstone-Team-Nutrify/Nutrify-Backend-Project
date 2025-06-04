@@ -1,11 +1,13 @@
 import { google } from "googleapis";
 import User from "../models/user.js";
 import { generateToken, setJwtCookie } from "../utils/jwtTemplate.js";
+import axios from "axios";
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
   "http://localhost:8080/auth/google/callback"
+  // process.env.GOOGLE_REDIRECT_URI
 );
 
 const scopes = [
@@ -53,10 +55,11 @@ const googleCallback = async (request, h) => {
     if (!user) {
       if (data.picture) {
         try {
-          const response = await fetch(data.picture);
-          const arrayBuffer = await response.arrayBuffer();
-          profilePictureBuffer = Buffer.from(arrayBuffer);
-          profilePictureMimeType = response.headers.get("content-type");
+          const response = await axios(data.picture, {
+            responseType: "arraybuffer",
+          });
+          profilePictureBuffer = Buffer.from(response.data);
+          profilePictureMimeType = response.headers["content-type"];
         } catch (err) {
           console.error("Failed to fetch Google profile picture:", err);
         }
@@ -90,6 +93,7 @@ const googleCallback = async (request, h) => {
           id: user._id,
           name: user.name,
           email: user.email,
+          password: user.password,
           role: user.role,
           profilePictureMimeType: user.profilePictureMimeType,
           age: user.age,
@@ -102,6 +106,8 @@ const googleCallback = async (request, h) => {
 
     console.log("📦 JSON Response:");
     console.log(JSON.stringify(responseObject, null, 2)); // tampil rapi di console
+    console.log({ token: token });
+
     return h.response(responseObject).code(200);
   } catch (error) {
     console.error("Google callback error:", error);

@@ -1,9 +1,10 @@
-import FoodItem from "../models/items.js";
-import PendingFoodItem from "../models/pendingItem.js";
+import Item from "../models/items.js";
+import pendingItem from "../models/pendingItems.js";
 import Boom from "@hapi/boom";
 import mongoose from "mongoose";
+import { getPredictionFromML } from "../services/mlService.js";
 
-export const getAllFoodItems = async (request, h) => {
+export const getAllItems = async (request, h) => {
   try {
     const page = parseInt(request.query.page, 10) || 1;
     const limit = parseInt(request.query.limit, 10) || 20;
@@ -15,21 +16,21 @@ export const getAllFoodItems = async (request, h) => {
       query = { name: { $regex: searchQuery, $options: "i" } };
     }
 
-    const foodItemsQuery = FoodItem.find(query)
+    const ItemsQuery = Item.find(query)
       .sort({ name: 1 })
       .skip(skip)
       .limit(limit);
 
-    const totalItemsQuery = FoodItem.countDocuments(query);
+    const totalItemsQuery = Item.countDocuments(query);
 
-    const [foodItems, totalItems] = await Promise.all([
-      foodItemsQuery.exec(),
+    const [Items, totalItems] = await Promise.all([
+      ItemsQuery.exec(),
       totalItemsQuery.exec(),
     ]);
 
     const totalPages = Math.ceil(totalItems / limit);
 
-    const formattedFoodItems = foodItems.map((item) => ({
+    const formattedItems = Items.map((item) => ({
       id: item._id.toString(),
       name: item.name,
       nation: item.nation,
@@ -44,7 +45,7 @@ export const getAllFoodItems = async (request, h) => {
       .response({
         status: "success",
         message: "Daftar makanan dan minuman berhasil diambil.",
-        data: formattedFoodItems,
+        data: formattedItems,
         pagination: {
           currentPage: page,
           totalPages: totalPages,
@@ -54,12 +55,12 @@ export const getAllFoodItems = async (request, h) => {
       })
       .code(200);
   } catch (err) {
-    console.error("Error getting all food items:", err.message, err.stack);
+    console.error("Error getting all items:", err.message, err.stack);
     throw Boom.internal("Terjadi kesalahan pada server saat mengambil data.");
   }
 };
 
-export const getFoodItemById = async (request, h) => {
+export const getItemById = async (request, h) => {
   try {
     const { id } = request.params;
 
@@ -67,49 +68,52 @@ export const getFoodItemById = async (request, h) => {
       throw Boom.badRequest("Format ID tidak valid.");
     }
 
-    const foodItem = await FoodItem.findById(id);
+    const item = await Item.findById(id);
 
-    if (!foodItem) {
+    if (!item) {
       throw Boom.notFound("Makanan atau minuman tidak ditemukan.");
     }
 
-    const formattedFoodItem = {
-      id: foodItem._id.toString(),
-      name: foodItem.name,
-      nation: foodItem.nation,
-      category: foodItem.category,
-      description: foodItem.description,
-      image: foodItem.image,
-      bahan: foodItem.bahan,
-      nutrisi_per_100g: foodItem.nutrisi_per_100g,
-      disease_rate: foodItem.disease_rate,
-      createdAt: foodItem.createdAt ? foodItem.createdAt.toISOString() : null,
-      updatedAt: foodItem.updatedAt ? foodItem.updatedAt.toISOString() : null,
+    const formattedItem = {
+      id: item._id.toString(),
+      name: item.name,
+      nation: item.nation,
+      category: item.category,
+      description: item.description,
+      image: item.image,
+      bahan: item.bahan,
+      nutrisi_total: item.nutrisi_total,
+      disease_rate: item.disease_rate,
+      createdAt: item.createdAt ? item.createdAt.toISOString() : null,
+      updatedAt: item.updatedAt ? item.updatedAt.toISOString() : null,
     };
 
     return h
       .response({
         status: "success",
         message: "Detail makanan atau minuman berhasil diambil.",
-        data: formattedFoodItem,
+        data: formattedItem,
       })
       .code(200);
   } catch (err) {
     if (err.isBoom) {
       throw err;
     }
-    console.error("Error getting food item by ID:", err.message, err.stack);
+    console.error("Error getting item by ID:", err.message, err.stack);
     throw Boom.internal("Terjadi kesalahan pada server saat mengambil data.");
   }
 };
 
-export const createFoodItem = async (request, h) => {
+export const createItem = async (request, h) => {
   try {
     const userId = request.auth.credentials.id;
     const userRole = request.auth.credentials.role;
     const payload = request.payload;
+    const bahan = payload.ingredients.map((ing) => ing.ingredientName);
+    const dose = payload.ingredients.map((ing) => ing.ingredientDose);
+    const prediction = await getPredictionFromML(bahan, dose);
 
-    const foodData = {
+    const itemData = {
       name: payload.name,
       category: payload.category,
       description: payload.description,
@@ -119,40 +123,41 @@ export const createFoodItem = async (request, h) => {
         jumlah: ing.ingredientDose,
         alias: ing.ingredientAlias,
       })),
-      nutrisi_per_100g: payload.nutritionPer100g,
+      nutrisi_total: payload.nutritionPer100g,
+      predictionResult: prediction,
     };
 
     if (userRole === "admin" || userRole === "moderator") {
-      const newFoodItem = new FoodItem(foodData);
-      await newFoodItem.save();
+      const newItem = new Item(itemData);
+      await newItem.save();
 
       return h
         .response({
           status: "success",
-          message: "Food added successfully",
+          message: "item added successfully",
           data: {
-            foodId: newFoodItem._id.toString(),
+            itemId: newItem._id.toString(),
             status: "approved",
-            submittedAt: newFoodItem.createdAt.toISOString(),
+            submittedAt: newItem.createdAt.toISOString(),
           },
         })
         .code(201);
     } else {
-      const newPendingFoodItem = new PendingFoodItem({
-        ...foodData,
+      const pewPendingItem = new pendingItem({
+        ...itemData,
         submittedBy: userId,
         status: "pending",
       });
-      await newPendingFoodItem.save();
+      await pewPendingItem.save();
 
       return h
         .response({
           status: "success",
-          message: "Food submitted for approval",
+          message: "item submitted for approval",
           data: {
-            foodId: newPendingFoodItem._id.toString(),
+            itemId: pewPendingItem._id.toString(),
             status: "pending",
-            submittedAt: newPendingFoodItem.createdAt.toISOString(),
+            submittedAt: pewPendingItem.createdAt.toISOString(),
           },
         })
         .code(201);
@@ -166,7 +171,7 @@ export const createFoodItem = async (request, h) => {
         "Data makanan dengan name ini mungkin sudah ada atau sedang diajukan."
       );
     }
-    console.error("Error creating food item:", err.message, err.stack);
+    console.error("Error creating item:", err.message, err.stack);
     throw Boom.internal(
       "Terjadi kesalahan pada server saat menambahkan data makanan."
     );

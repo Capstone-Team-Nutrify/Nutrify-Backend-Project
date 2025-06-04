@@ -1,4 +1,3 @@
-// import { boolean, number } from "joi";
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
@@ -58,16 +57,7 @@ const NutrisiSchema = new Schema(
   { _id: false, strict: false }
 );
 
-const DiseaseRateSchema = new Schema(
-  {
-    disease: String,
-    warning: String,
-    note: String,
-  },
-  { _id: false }
-);
-
-const ItemSchema = new Schema(
+const PendingItemSchema = new Schema(
   {
     name: {
       type: String,
@@ -90,30 +80,30 @@ const ItemSchema = new Schema(
       type: String,
       trim: true,
     },
-    origin: {
-      type: String,
-      trim: true,
-    },
     ingredients: [BahanSchema],
     nutrisi_total: NutrisiSchema,
-    disease_rate: [DiseaseRateSchema],
-    submittedBy: { type: Schema.Types.ObjectId, ref: "User" },
-    submittedAt: { type: Date, default: Date.now },
-    reviewedBy: { type: Schema.Types.ObjectId, ref: "Admin" },
-    reviewedAt: { type: Date },
-    isPublic: {
-      type: Boolean,
-      default: false,
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+      required: true,
     },
+    submittedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    reviewNotes: String,
+    reviewedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    reviewedAt: Date,
   },
   {
     timestamps: true,
-    collection: "items",
   }
 );
 
-ItemSchema.index({ name: "text", origin: "text", category: "text" });
+PendingItemSchema.index({ name: "text", category: "text", status: 1 });
 
-const Item = mongoose.model("Item", ItemSchema);
+const pendingItem = mongoose.model("PendingItem", PendingItemSchema);
 
-export default Item;
+export default pendingItem;

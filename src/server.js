@@ -6,7 +6,7 @@ import { connectDB } from "./config/db.js";
 import { serverConfig } from "./config/serverConfig.js";
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
-import foodItemRoutes from "./routes/itemsRoutes.js";
+import itemRoutes from "./routes/itemsRoutes.js";
 import moderationRoutes from "./routes/moderationRoutes.js";
 import randomItemRoutes from "./routes/randomItemRoutes.js";
 import cookie from "@hapi/cookie";
@@ -41,7 +41,7 @@ const init = async () => {
     ...indexRoutes,
     ...authRoutes,
     ...adminRoutes,
-    ...foodItemRoutes,
+    ...itemRoutes,
     ...moderationRoutes,
     ...randomItemRoutes,
     ...displayItemRoutes,

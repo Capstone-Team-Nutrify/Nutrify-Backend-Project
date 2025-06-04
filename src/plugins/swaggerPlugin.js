@@ -23,10 +23,24 @@ const swaggerPlugin = {
       grouping: "tags",
       sortEndpoints: "ordered",
       tags: [
-        { name: "auth", description: "Endpoint untuk autentikasi dan manajemen profil pengguna" },
-        { name: "admin", description: "Endpoint khusus untuk administrasi (Admin only)" },
-        { name: "food-items", description: "Endpoint untuk makanan dan minuman publik" },
-        { name: "moderation", description: "Endpoint untuk moderasi konten makanan (Admin/Moderator only)" }
+        {
+          name: "auth",
+          description:
+            "Endpoint untuk autentikasi dan manajemen profil pengguna",
+        },
+        {
+          name: "admin",
+          description: "Endpoint khusus untuk administrasi (Admin only)",
+        },
+        {
+          name: "items",
+          description: "Endpoint untuk makanan dan minuman publik",
+        },
+        {
+          name: "moderation",
+          description:
+            "Endpoint untuk moderasi konten makanan (Admin/Moderator only)",
+        },
       ],
     };
 

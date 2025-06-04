@@ -1,8 +1,8 @@
-import FoodItem from "../models/items.js";
+import Item from "../models/items.js";
 
 export const getRandomItems = async (request, h) => {
   try {
-    const randomItems = await FoodItem.aggregate([
+    const randomItems = await Item.aggregate([
       { $match: { isPublic: true } },
       { $sample: { size: 10 } },
     ]);
@@ -11,7 +11,7 @@ export const getRandomItems = async (request, h) => {
       return h
         .response({
           success: false,
-          message: "No food items found",
+          message: "No items found",
         })
         .code(404);
     }

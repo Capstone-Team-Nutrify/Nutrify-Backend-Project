@@ -1,22 +1,38 @@
-const predictHandler = async (request, h) => {
-  const { bahan, dose } = request.payload;
+export const predictHandler = async (request, h) => {
+  const { ingeredient, dose } = request.payload;
 
-  if (!bahan || !dose) {
+  if (
+    !Array.isArray(ingeredient) ||
+    !Array.isArray(dose) ||
+    ingeredient.length === 0 ||
+    dose.length === 0
+  ) {
     return h
       .response({
-        success: "false",
-        message: "Bahan or Dose is Required",
+        success: false,
+        message: "ingeredient and Dose must be non-empty arrays",
       })
       .code(400);
   }
 
   try {
-    const response = await fetch(process.env.ML_API_URI, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-    });
-  } catch (error) {}
+    const predictionResult = await getPredictionFromML(ingeredient, dose);
+
+    return h
+      .response({
+        success: true,
+        input_ingeredient: ingeredient,
+        input_dose: dose,
+        prediction: predictionResult,
+      })
+      .code(200);
+  } catch (err) {
+    return h
+      .response({
+        success: false,
+        message: "Failed to get prediction from ML API",
+        error: err.message,
+      })
+      .code(500);
+  }
 };

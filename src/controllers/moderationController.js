@@ -1,10 +1,10 @@
-import PendingFoodItem from "../models/pendingItem.js";
-import FoodItem from "../models/items.js";
+import PendingItem from "../models/pendingItems.js";
+import Item from "../models/items.js";
 import User from "../models/user.js";
 import Boom from "@hapi/boom";
 import mongoose from "mongoose";
 
-export const getPendingFoodItems = async (request, h) => {
+export const getPendingItems = async (request, h) => {
   try {
     const userRole = request.auth.credentials.role;
     if (userRole !== "admin" && userRole !== "moderator") {
@@ -17,13 +17,13 @@ export const getPendingFoodItems = async (request, h) => {
     const limit = parseInt(request.query.limit, 10) || 10;
     const skip = (page - 1) * limit;
 
-    const pendingItemsQuery = PendingFoodItem.find({ status: "pending" })
+    const pendingItemsQuery = PendingItem.find({ status: "pending" })
       .populate("submittedBy", "name email")
       .sort({ createdAt: 1 })
       .skip(skip)
       .limit(limit);
 
-    const totalPendingItemsQuery = PendingFoodItem.countDocuments({
+    const totalPendingItemsQuery = PendingItem.countDocuments({
       status: "pending",
     });
 
@@ -36,12 +36,12 @@ export const getPendingFoodItems = async (request, h) => {
 
     const formattedPendingItems = pendingItems.map((item) => ({
       pendingId: item._id.toString(),
-      nama: item.nama,
-      kategori: item.kategori,
-      deskripsi: item.deskripsi,
-      foto_url: item.foto_url,
+      name: item.name,
+      category: item.category,
+      description: item.description,
+      img: item.img,
       bahan: item.bahan,
-      nutrisi_per_100g: item.nutrisi_per_100g,
+      nutrisi_total: item.nutrisi_total,
       submittedBy: item.submittedBy
         ? {
             userId: item.submittedBy._id.toString(),
@@ -67,14 +67,14 @@ export const getPendingFoodItems = async (request, h) => {
       .code(200);
   } catch (err) {
     if (err.isBoom) throw err;
-    console.error("Error getting pending food items:", err.message, err.stack);
+    console.error("Error getting pending items:", err.message, err.stack);
     throw Boom.internal(
       "Terjadi kesalahan pada server saat mengambil data pending."
     );
   }
 };
 
-export const approvePendingFoodItem = async (request, h) => {
+export const approvePendingItem = async (request, h) => {
   try {
     const userRole = request.auth.credentials.role;
     if (userRole !== "admin" && userRole !== "moderator") {
@@ -88,7 +88,7 @@ export const approvePendingFoodItem = async (request, h) => {
       throw Boom.badRequest("Format ID pending tidak valid.");
     }
 
-    const pendingItem = await PendingFoodItem.findById(pendingId);
+    const pendingItem = await PendingItem.findById(pendingId);
     if (!pendingItem) {
       throw Boom.notFound("Item makanan pending tidak ditemukan.");
     }
@@ -98,28 +98,28 @@ export const approvePendingFoodItem = async (request, h) => {
       );
     }
 
-    const foodData = {
-      nama: pendingItem.nama,
-      kategori: pendingItem.kategori,
-      deskripsi: pendingItem.deskripsi,
-      foto_url: pendingItem.foto_url,
+    const itemData = {
+      name: pendingItem.name,
+      category: pendingItem.category,
+      description: pendingItem.description,
+      img: pendingItem.img,
       bahan: pendingItem.bahan,
-      nutrisi_per_100g: pendingItem.nutrisi_per_100g,
+      nutrisi_total: pendingItem.nutrisi_total,
       asal: pendingItem.asal,
       disease_rate: pendingItem.disease_rate,
     };
 
-    const existingFoodItem = await FoodItem.findOne({ nama: foodData.nama });
-    if (existingFoodItem) {
+    const existingItem = await Item.findOne({ name: itemData.name });
+    if (existingItem) {
       pendingItem.status = "rejected";
       await pendingItem.save();
       throw Boom.conflict(
-        `Makanan dengan nama '${foodData.nama}' sudah ada di daftar utama. Pengajuan ini ditolak.`
+        `Makanan dengan name '${itemData.name}' sudah ada di daftar utama. Pengajuan ini ditolak.`
       );
     }
 
-    const newFoodItem = new FoodItem(foodData);
-    await newFoodItem.save();
+    const newItem = new Item(itemData);
+    await newItem.save();
 
     pendingItem.status = "approved";
     await pendingItem.save();
@@ -127,24 +127,24 @@ export const approvePendingFoodItem = async (request, h) => {
     return h
       .response({
         status: "success",
-        message: `Makanan '${newFoodItem.nama}' berhasil disetujui dan ditambahkan.`,
+        message: `Makanan '${newItem.name}' berhasil disetujui dan ditambahkan.`,
         data: {
-          foodId: newFoodItem._id.toString(),
-          nama: newFoodItem.nama,
+          itemId: newItem._id.toString(),
+          name: newItem.name,
           status: "approved",
         },
       })
       .code(200);
   } catch (err) {
     if (err.isBoom) throw err;
-    console.error("Error approving food item:", err.message, err.stack);
+    console.error("Error approving item:", err.message, err.stack);
     throw Boom.internal(
       "Terjadi kesalahan pada server saat menyetujui makanan."
     );
   }
 };
 
-export const rejectPendingFoodItem = async (request, h) => {
+export const rejectPendingItem = async (request, h) => {
   try {
     const userRole = request.auth.credentials.role;
     if (userRole !== "admin" && userRole !== "moderator") {
@@ -160,7 +160,7 @@ export const rejectPendingFoodItem = async (request, h) => {
       throw Boom.badRequest("Format ID pending tidak valid.");
     }
 
-    const pendingItem = await PendingFoodItem.findById(pendingId);
+    const pendingItem = await PendingItem.findById(pendingId);
     if (!pendingItem) {
       throw Boom.notFound("Item makanan pending tidak ditemukan.");
     }
@@ -177,17 +177,17 @@ export const rejectPendingFoodItem = async (request, h) => {
     return h
       .response({
         status: "success",
-        message: `Pengajuan makanan '${pendingItem.nama}' berhasil ditolak.`,
+        message: `Pengajuan makanan '${pendingItem.name}' berhasil ditolak.`,
         data: {
           pendingId: pendingItem._id.toString(),
-          nama: pendingItem.nama,
+          name: pendingItem.name,
           status: "rejected",
         },
       })
       .code(200);
   } catch (err) {
     if (err.isBoom) throw err;
-    console.error("Error rejecting food item:", err.message, err.stack);
+    console.error("Error rejecting item:", err.message, err.stack);
     throw Boom.internal("Terjadi kesalahan pada server saat menolak makanan.");
   }
 };

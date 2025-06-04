@@ -1,27 +1,27 @@
 import Joi from "joi";
 import {
-  getAllFoodItems,
-  getFoodItemById,
-  createFoodItem,
+  getAllItems,
+  getItemById,
+  createItem,
 } from "../controllers/itemsController.js";
 
 const BahanItemSchemaJoi = Joi.object({
-  nama: Joi.string(),
-  jumlah: Joi.string(),
-  alias: Joi.string().allow("", null).optional(),
+  ingredientName: Joi.string(),
+  ingredientDose: Joi.string(),
+  ingredientAlias: Joi.string().allow("", null).optional(),
 }).unknown(true);
 
 const NutrisiSchemaJoi = Joi.object().unknown(true);
 
-const FoodItemDetailSchema = Joi.object({
+const ItemDetailSchema = Joi.object({
   id: Joi.string().required(),
-  nama: Joi.string().required(),
-  asal: Joi.string().allow(null, ""),
-  kategori: Joi.string().required(),
-  deskripsi: Joi.string().allow(null, ""),
-  foto_url: Joi.string().uri().allow(null, ""),
-  bahan: Joi.array().items(BahanItemSchemaJoi),
-  nutrisi_per_100g: NutrisiSchemaJoi,
+  name: Joi.string().required(),
+  nation: Joi.string().allow(null, ""),
+  category: Joi.string().required(),
+  description: Joi.string().allow(null, ""),
+  image: Joi.string().uri().allow(null, ""),
+  ingredients: Joi.array().items(BahanItemSchemaJoi),
+  nutrisi_total: NutrisiSchemaJoi,
   disease_rate: Joi.array().items(
     Joi.object({
       penyakit: Joi.string(),
@@ -33,13 +33,13 @@ const FoodItemDetailSchema = Joi.object({
   updatedAt: Joi.string().isoDate().allow(null).required(),
 }).unknown(true);
 
-const FoodItemListSchema = Joi.object({
+const ItemListSchema = Joi.object({
   id: Joi.string().required(),
-  nama: Joi.string().required(),
-  asal: Joi.string().allow(null, ""),
-  kategori: Joi.string().required(),
-  deskripsi: Joi.string().allow(null, ""),
-  foto_url: Joi.string().uri().allow(null, ""),
+  name: Joi.string().required(),
+  origin: Joi.string().allow(null, ""),
+  category: Joi.string().required(),
+  description: Joi.string().allow(null, ""),
+  image: Joi.string().uri().required().allow(null, ""),
   createdAt: Joi.string().isoDate().allow(null).required(),
   updatedAt: Joi.string().isoDate().allow(null).required(),
 }).unknown(true);
@@ -50,35 +50,63 @@ const IngredientInputSchema = Joi.object({
   ingredientDose: Joi.string().required(),
 });
 
-const NutritionInputSchema = Joi.object({
-  kalori: Joi.number().min(0).required(),
-  lemak: Joi.number().min(0).required(),
-  karbohidrat: Joi.number().min(0).required(),
-  protein: Joi.number().min(0).optional(),
-  gula: Joi.number().min(0).optional(),
-  serat: Joi.number().min(0).required(),
-  kolesterol: Joi.number().min(0).required(),
-  natrium: Joi.number().min(0).required(),
+const VitaminSchemaJoi = Joi.object({
+  vitamin_A: Joi.number().min(0).optional(), // Angka, minimal 0, opsional
+  vitamin_B1: Joi.number().min(0).optional(),
+  vitamin_B2: Joi.number().min(0).optional(),
+  vitamin_B3: Joi.number().min(0).optional(),
+  vitamin_B5: Joi.number().min(0).optional(),
+  vitamin_B6: Joi.number().min(0).optional(),
+  vitamin_B11: Joi.number().min(0).optional(),
+  vitamin_B12: Joi.number().min(0).optional(),
   vitamin_C: Joi.number().min(0).optional(),
+  vitamin_D: Joi.number().min(0).optional(),
+  vitamin_E: Joi.number().min(0).optional(),
+  vitamin_K: Joi.number().min(0).optional(),
+}).unknown(false);
+
+// Joi Schema untuk MineralSchema
+const MineralSchemaJoi = Joi.object({
+  calsium: Joi.number().min(0).optional(),
+  iron: Joi.number().min(0).optional(),
+  magnesium: Joi.number().min(0).optional(),
+  phosphorus: Joi.number().min(0).optional(),
+  potassium: Joi.number().min(0).optional(),
+  zinc: Joi.number().min(0).optional(),
+}).unknown(false);
+
+// Joi Schema untuk NutrisiSchema (menggabungkan Vitamin dan Mineral)
+const NutrisiSchemaJoiDb = Joi.object({
+  calories: Joi.number().min(0).optional(),
+  fat: Joi.number().min(0).optional(),
+  carbohydrate: Joi.number().min(0).optional(),
+  sugar: Joi.number().min(0).optional(),
+  protein: Joi.number().min(0).optional(),
+  fiber: Joi.number().min(0).optional(),
+  cholesterol: Joi.number().min(0).optional(),
+  sodium: Joi.number().min(0).optional(),
+  water: Joi.number().min(0).optional(),
+  vitamins: VitaminSchemaJoi.optional(),
+  minerals: MineralSchemaJoi.optional(),
 }).unknown(true);
 
-const CreateFoodItemPayloadSchema = Joi.object({
+const CreateItemPayloadSchema = Joi.object({
   name: Joi.string().min(3).max(100).required(),
   description: Joi.string().min(10).required(),
-  imageUrl: Joi.string().uri().required(),
+  image: Joi.string().uri().required(),
   category: Joi.string().required(),
-  nutritionPer100g: NutritionInputSchema.required(),
+  // nutrisi_total: NutrisiSchemaJoiDb.required(),
   ingredients: Joi.array().items(IngredientInputSchema).min(1).required(),
 });
 
 export default [
   {
     method: "GET",
-    path: "/api/food-items",
+    path: "/api/items",
     options: {
       auth: false,
       description: "Dapatkan semua daftar makanan dan minuman (approved)",
-      tags: ["api", "food-items"],
+      tags: ["api", "items"],
       validate: {
         query: Joi.object({
           page: Joi.number().integer().min(1).default(1),
@@ -91,7 +119,7 @@ export default [
           200: Joi.object({
             status: Joi.string().valid("success").required(),
             message: Joi.string().required(),
-            data: Joi.array().items(FoodItemListSchema).required(),
+            data: Joi.array().items(ItemListSchema).required(),
             pagination: Joi.object({
               currentPage: Joi.number().integer().required(),
               totalPages: Joi.number().integer().required(),
@@ -101,17 +129,17 @@ export default [
           }),
         },
       },
-      handler: getAllFoodItems,
+      handler: getAllItems,
     },
   },
   {
     method: "GET",
-    path: "/api/food-items/{id}",
+    path: "/api/items/{id}",
     options: {
       auth: false,
       description:
         "Dapatkan detail makanan atau minuman berdasarkan ID (approved)",
-      tags: ["api", "food-items"],
+      tags: ["api", "items"],
       validate: {
         params: Joi.object({
           id: Joi.string().required(),
@@ -122,22 +150,22 @@ export default [
           200: Joi.object({
             status: Joi.string().valid("success").required(),
             message: Joi.string().required(),
-            data: FoodItemDetailSchema.required(),
+            data: ItemDetailSchema.required(),
           }),
         },
       },
-      handler: getFoodItemById,
+      handler: getItemById,
     },
   },
   {
     method: "POST",
-    path: "/api/food-items",
+    path: "/api/items",
     options: {
       auth: { strategy: "jwt", mode: "required" },
       description: "Tambahkan data makanan/minuman baru...",
-      tags: ["api", "food-items"],
+      tags: ["api", "items"],
       validate: {
-        payload: CreateFoodItemPayloadSchema,
+        payload: CreateItemPayloadSchema,
       },
       response: {
         status: {
@@ -145,14 +173,14 @@ export default [
             status: Joi.string().valid("success").required(),
             message: Joi.string().required(),
             data: Joi.object({
-              foodId: Joi.string().required(),
+              itemId: Joi.string().required(),
               status: Joi.string().valid("pending", "approved").required(),
               submittedAt: Joi.string().isoDate().required(),
             }).required(),
           }),
         },
       },
-      handler: createFoodItem,
+      handler: createItem,
     },
   },
 ];
