@@ -40,7 +40,7 @@ export const getPendingItems = async (request, h) => {
       category: item.category,
       description: item.description,
       img: item.img,
-      bahan: item.bahan,
+      ingredients: item.ingredients,
       nutrisi_total: item.nutrisi_total,
       submittedBy: item.submittedBy
         ? {
@@ -103,7 +103,7 @@ export const approvePendingItem = async (request, h) => {
       category: pendingItem.category,
       description: pendingItem.description,
       img: pendingItem.img,
-      bahan: pendingItem.bahan,
+      ingredients: pendingItem.ingredients,
       nutrisi_total: pendingItem.nutrisi_total,
       asal: pendingItem.asal,
       disease_rate: pendingItem.disease_rate,

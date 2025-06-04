@@ -32,7 +32,7 @@ const PendingItemSchemaJoi = Joi.object({
 export default [
   {
     method: "GET",
-    path: "/api/moderation/pending-items",
+    path: "/api/pending-items",
     options: {
       auth: { strategy: "jwt", mode: "required" },
       description:
@@ -64,7 +64,7 @@ export default [
   },
   {
     method: "PATCH",
-    path: "/api/moderation/pending-items/{pendingId}/approve",
+    path: "/api/pending-items/{pendingId}/approve",
     options: {
       auth: { strategy: "jwt", mode: "required" },
       description: "Setujui pengajuan makanan (Admin/Moderator only)",
@@ -92,7 +92,7 @@ export default [
   },
   {
     method: "PATCH",
-    path: "/api/moderation/pending-items/{pendingId}/reject",
+    path: "/api/pending-items/{pendingId}/reject",
     options: {
       auth: { strategy: "jwt", mode: "required" },
       description: "Tolak pengajuan makanan (Admin/Moderator only)",

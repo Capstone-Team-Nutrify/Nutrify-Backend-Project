@@ -81,7 +81,7 @@ export const getItemById = async (request, h) => {
       category: item.category,
       description: item.description,
       image: item.image,
-      bahan: item.bahan,
+      ingredients: item.ingredients,
       nutrisi_total: item.nutrisi_total,
       disease_rate: item.disease_rate,
       createdAt: item.createdAt ? item.createdAt.toISOString() : null,
@@ -109,22 +109,23 @@ export const createItem = async (request, h) => {
     const userId = request.auth.credentials.id;
     const userRole = request.auth.credentials.role;
     const payload = request.payload;
-    const bahan = payload.ingredients.map((ing) => ing.ingredientName);
+    const ingredients = payload.ingredients.map((ing) => ing.ingredientName);
     const dose = payload.ingredients.map((ing) => ing.ingredientDose);
-    const prediction = await getPredictionFromML(bahan, dose);
+    const prediction = await getPredictionFromML(ingredients, dose);
 
     const itemData = {
       name: payload.name,
+      nation: payload.nation,
       category: payload.category,
       description: payload.description,
-      image: payload.imageUrl,
-      bahan: payload.ingredients.map((ing) => ({
-        name: ing.ingredientName,
-        jumlah: ing.ingredientDose,
-        alias: ing.ingredientAlias,
+      image: payload.image,
+      ingredients: payload.ingredients.map((ing) => ({
+        ingredientName: ing.ingredientName,
+        ingredientDose: ing.ingredientDose,
+        ingredientAlias: ing.ingredientAlias,
       })),
-      nutrisi_total: payload.nutritionPer100g,
-      predictionResult: prediction,
+      nutrisi_total: prediction.total_nutrition,
+      predictResult: prediction.disease_rate,
     };
 
     if (userRole === "admin" || userRole === "moderator") {
