@@ -1,4 +1,4 @@
-import FoodItem from "../models/FoodItem.js";
+import FoodItem from "../models/items.js";
 
 export const getRandomItems = async (request, h) => {
   try {

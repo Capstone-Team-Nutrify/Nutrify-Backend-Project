@@ -1,4 +1,3 @@
-// ✅ BENAR - ini array berisi satu route
 export const indexRoutes = [
   {
     method: "GET",
