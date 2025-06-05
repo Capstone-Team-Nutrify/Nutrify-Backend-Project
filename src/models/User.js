@@ -16,9 +16,9 @@ const userSchema = new Schema(
       select: false,
     },
     role: {
-      type: String,
-      enum: ['user', 'admin'],
-      default: 'user',
+        type: String,
+        enum: ['user', 'moderator', 'admin'],
+        default: 'user'
     },
     profilePictureData: {
       type: Buffer,
@@ -41,12 +41,10 @@ const userSchema = new Schema(
       default: null,
     },
     isVerified: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  { timestamps: true }
-);
+        type: Boolean,
+        default: false
+    }
+}, { timestamps: true });
 
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();

@@ -1,6 +1,5 @@
-/* eslint-disable no-unused-vars */
-import jwt from 'hapi-auth-jwt2';
-import User from '../models/User.js';
+import jwt from "hapi-auth-jwt2";
+import User from "../models/user.js";
 
 const plugin = {
   name: 'jwtAuthStrategyPlugin',
@@ -11,27 +10,34 @@ const plugin = {
       key: process.env.JWT_SECRET,
       validate: async (decoded, request, h) => {
         try {
-          if (process.env.NODE_ENV !== 'production') {
-            console.log('JWT validation: decoded token:', decoded);
+          if (process.env.NODE_ENV !== "production") {
+            console.log("JWT validation: decoded token:", decoded);
           }
 
           if (!decoded || !decoded.id) {
-            if (process.env.NODE_ENV !== 'production') {
-              console.log('JWT validation: Invalid decoded token - missing id.');
+            if (process.env.NODE_ENV !== "production") {
+              console.log(
+                "JWT validation: Invalid decoded token - missing id."
+              );
             }
             return { isValid: false };
           }
 
-          const user = await User.findById(decoded.id).select('+role');
+          const user = await User.findById(decoded.id).select("+role");
           if (!user) {
-            if (process.env.NODE_ENV !== 'production') {
-              console.log('JWT validation: User not found for id:', decoded.id);
+            if (process.env.NODE_ENV !== "production") {
+              console.log("JWT validation: User not found for id:", decoded.id);
             }
             return { isValid: false };
           }
 
-          if (process.env.NODE_ENV !== 'production') {
-            console.log('JWT validation: Successful for user_id:', user._id, 'with role:', user.role);
+          if (process.env.NODE_ENV !== "production") {
+            console.log(
+              "JWT validation: Successful for user_id:",
+              user._id,
+              "with role:",
+              user.role
+            );
           }
           return {
             isValid: true,
@@ -53,10 +59,10 @@ const plugin = {
       keepCredentials: true,
     });
 
-    if (process.env.NODE_ENV !== 'production') {
-      server.events.on('request', (request, event) => {
-        if (event.tags && event.tags.includes('auth')) {
-          console.log('Auth event:', {
+    if (process.env.NODE_ENV !== "production") {
+      server.events.on("request", (request, event) => {
+        if (event.tags && event.tags.includes("auth")) {
+          console.log("Auth event:", {
             path: request.path,
             method: request.method,
             auth: request.auth,
