@@ -1,23 +1,21 @@
-import { google } from "googleapis";
-import User from "../models/user.js";
-import { generateToken, setJwtCookie } from "../utils/jwtTemplate.js";
-import axios from "axios";
+/* eslint-disable camelcase */
+import { google } from 'googleapis';
+import User from '../models/user.js';
+import { generateToken, setJwtCookie } from '../utils/jwtTemplate.js';
+import axios from 'axios';
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  "http://localhost:8080/auth/google/callback"
+  'http://localhost:8080/auth/google/callback'
   // process.env.GOOGLE_REDIRECT_URI
 );
 
-const scopes = [
-  "https://www.googleapis.com/auth/userinfo.email",
-  "https://www.googleapis.com/auth/userinfo.profile",
-];
+const scopes = ['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'];
 
 const authorizationUrl = (request, h) => {
   const url = oauth2Client.generateAuthUrl({
-    access_type: "offline",
+    access_type: 'offline',
     scope: scopes,
     include_granted_scopes: true,
   });
@@ -28,7 +26,7 @@ const googleCallback = async (request, h) => {
   const { code } = request.query;
 
   if (!code) {
-    return h.response({ err: "Authorization code not found" }).code(400);
+    return h.response({ err: 'Authorization code not found' }).code(400);
   }
 
   try {
@@ -37,15 +35,13 @@ const googleCallback = async (request, h) => {
 
     const oauth2 = google.oauth2({
       auth: oauth2Client,
-      version: "v2",
+      version: 'v2',
     });
 
     const { data } = await oauth2.userinfo.get();
 
     if (!data) {
-      return h
-        .response({ err: "Failed to get user data from Google" })
-        .code(400);
+      return h.response({ err: 'Failed to get user data from Google' }).code(400);
     }
 
     let user = await User.findOne({ email: data.email });
@@ -56,12 +52,12 @@ const googleCallback = async (request, h) => {
       if (data.picture) {
         try {
           const response = await axios(data.picture, {
-            responseType: "arraybuffer",
+            responseType: 'arraybuffer',
           });
           profilePictureBuffer = Buffer.from(response.data);
-          profilePictureMimeType = response.headers["content-type"];
+          profilePictureMimeType = response.headers['content-type'];
         } catch (err) {
-          console.error("Failed to fetch Google profile picture:", err);
+          console.error('Failed to fetch Google profile picture:', err);
         }
       }
 
@@ -69,7 +65,7 @@ const googleCallback = async (request, h) => {
       user = await User.create({
         name: data.name,
         email: data.email,
-        role: "user",
+        role: 'user',
         profilePictureData: profilePictureBuffer,
         profilePictureMimeType: profilePictureMimeType,
         age: data.age || null,
@@ -104,14 +100,14 @@ const googleCallback = async (request, h) => {
       },
     };
 
-    console.log("📦 JSON Response:");
+    console.log('📦 JSON Response:');
     console.log(JSON.stringify(responseObject, null, 2)); // tampil rapi di console
     console.log({ token: token });
 
     return h.response(responseObject).code(200);
   } catch (error) {
-    console.error("Google callback error:", error);
-    return h.response({ err: "Authentication failed" }).code(500);
+    console.error('Google callback error:', error);
+    return h.response({ err: 'Authentication failed' }).code(500);
   }
 };
 

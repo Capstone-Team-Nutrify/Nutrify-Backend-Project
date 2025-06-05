@@ -1,14 +1,14 @@
-import { getIngredients } from "../controllers/displayItemController.js";
-import Joi from "joi";
+import { getIngredients } from '../controllers/displayItemController.js';
+import Joi from 'joi';
 
 const displayItemRoutes = [
   {
-    method: "GET",
-    path: "/api/display-ingredients",
+    method: 'GET',
+    path: '/api/display-ingredients',
     handler: getIngredients,
     options: {
-      description: "Get 50 ingredients with search functionality",
-      tags: ["api", "ingredients"],
+      description: 'Get 50 ingredients with search functionality',
+      tags: ['api', 'ingredients'],
       auth: false,
       validate: {
         query: Joi.object({

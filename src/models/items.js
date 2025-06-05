@@ -1,5 +1,6 @@
+/* eslint-disable camelcase */
 // import { boolean, number } from "joi";
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
 const BahanSchema = new Schema(
@@ -97,9 +98,9 @@ const ItemSchema = new Schema(
     ingredients: [BahanSchema],
     nutrisi_total: NutrisiSchema,
     disease_rate: [DiseaseRateSchema],
-    submittedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    submittedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     submittedAt: { type: Date, default: Date.now },
-    reviewedBy: { type: Schema.Types.ObjectId, ref: "Admin" },
+    reviewedBy: { type: Schema.Types.ObjectId, ref: 'Admin' },
     reviewedAt: { type: Date },
     isPublic: {
       type: Boolean,
@@ -108,12 +109,12 @@ const ItemSchema = new Schema(
   },
   {
     timestamps: true,
-    collection: "items",
+    collection: 'items',
   }
 );
 
-ItemSchema.index({ name: "text", origin: "text", category: "text" });
+ItemSchema.index({ name: 'text', origin: 'text', category: 'text' });
 
-const Item = mongoose.model("Item", ItemSchema);
+const Item = mongoose.model('Item', ItemSchema);
 
 export default Item;

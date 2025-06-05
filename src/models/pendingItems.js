@@ -1,4 +1,5 @@
-import mongoose from "mongoose";
+/* eslint-disable camelcase */
+import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
 const BahanSchema = new Schema(
@@ -84,17 +85,17 @@ const PendingItemSchema = new Schema(
     nutrisi_total: NutrisiSchema,
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "pending",
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
       required: true,
     },
     submittedBy: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
       required: true,
     },
     reviewNotes: String,
-    reviewedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     reviewedAt: Date,
   },
   {
@@ -102,8 +103,8 @@ const PendingItemSchema = new Schema(
   }
 );
 
-PendingItemSchema.index({ name: "text", category: "text", status: 1 });
+PendingItemSchema.index({ name: 'text', category: 'text', status: 1 });
 
-const pendingItem = mongoose.model("PendingItem", PendingItemSchema);
+const pendingItem = mongoose.model('PendingItem', PendingItemSchema);
 
 export default pendingItem;

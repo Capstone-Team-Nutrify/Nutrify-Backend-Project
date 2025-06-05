@@ -1,26 +1,23 @@
-import {
-  googleCallback,
-  authorizationUrl,
-} from "../controllers/authGoogleController.js";
+import { googleCallback, authorizationUrl } from '../controllers/authGoogleController.js';
 
 const authGoogle = [
   {
-    method: "GET",
-    path: "/auth/google",
+    method: 'GET',
+    path: '/auth/google',
     handler: authorizationUrl,
     options: {
-      description: "Authentication OAuth 2.0 Google",
-      tags: ["api"],
+      description: 'Authentication OAuth 2.0 Google',
+      tags: ['api'],
       auth: false,
     },
   },
   {
-    method: "GET",
-    path: "/auth/google/callback",
+    method: 'GET',
+    path: '/auth/google/callback',
     handler: googleCallback,
     options: {
-      description: "Handle callback setelah login Google",
-      tags: ["api"],
+      description: 'Handle callback setelah login Google',
+      tags: ['api'],
       auth: false,
     },
   },

@@ -1,17 +1,14 @@
-import Item from "../models/items.js";
+import Item from '../models/items.js';
 
 export const getRandomItems = async (request, h) => {
   try {
-    const randomItems = await Item.aggregate([
-      { $match: { isPublic: true } },
-      { $sample: { size: 10 } },
-    ]);
+    const randomItems = await Item.aggregate([{ $match: { isPublic: true } }, { $sample: { size: 10 } }]);
 
     if (!randomItems || randomItems.length === 0) {
       return h
         .response({
           success: false,
-          message: "No items found",
+          message: 'No items found',
         })
         .code(404);
     }
@@ -26,7 +23,7 @@ export const getRandomItems = async (request, h) => {
     return h
       .response({
         success: false,
-        message: "Error fetching random items",
+        message: 'Error fetching random items',
         error: error.message,
       })
       .code(500);

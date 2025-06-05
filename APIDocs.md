@@ -395,6 +395,44 @@
 }
 ```
 
+```json
+{
+    "foodId": "1",
+          "name": "Rendang",
+      "nation": "Indonesia",
+      "image": "/rendang.jpg",
+      "category": "food",
+      "description": "Rendang is a rich and tender coconut beef stew which is explosively flavorful and famous throughout Indonesia. Simmered in coconut milk and spices until the liquid evaporates, this dish is intensely flavorful with complex layers of taste from the various spices used in its preparation.",
+      "origin": "Minangkabau, West Sumatra",
+        "ingredients": [
+        {
+            "ingredientAlias": "daging sapi mentah",
+            "ingredientName": "Daging Sapi",
+            "ingredientDose": "1000" // gram
+        },
+        {
+            "ingredientAlias": "bawang putih",
+            "ingredientName": "Bawang Putih",
+            "ingredientDose": "100" // gram
+        },
+    ],
+    "nutritionPer100g": [ null ],
+    "disease rate": {
+    "nama_makanan": [ null ],
+    "prediction": {
+      "error": false,
+      "message": "Prediksi berhasil",
+      "predictions": [ null ]
+    },
+    "status": string,
+    "submittedBy": string,
+    "submittedAt": string,
+    "reviewedBy": string,
+    "reviewedAt": string,
+    "isPublic": boolean
+}
+```
+
 #### GET /food
 
 #### GET /food/:foodId

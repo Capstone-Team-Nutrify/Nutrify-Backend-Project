@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from 'axios';
 
 export const getPredictionFromML = async (ingredient, dose) => {
   try {
@@ -14,15 +14,15 @@ export const getPredictionFromML = async (ingredient, dose) => {
       },
       {
         headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
       }
     );
 
     return response.data;
   } catch (error) {
-    const message = error.response?.data?.message || "ML API error";
+    const message = error.response?.data?.message || 'ML API error';
     throw new Error(message);
   }
 };

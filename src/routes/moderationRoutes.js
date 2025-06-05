@@ -1,14 +1,11 @@
-import Joi from "joi";
-import {
-  getPendingItems,
-  approvePendingItem,
-  rejectPendingItem,
-} from "../controllers/moderationController.js";
+/* eslint-disable camelcase */
+import Joi from 'joi';
+import { getPendingItems, approvePendingItem, rejectPendingItem } from '../controllers/moderationController.js';
 
 const BahanItemSchemaJoi = Joi.object({
   name: Joi.string(),
   jumlah: Joi.string(),
-  alias: Joi.string().allow("", null).optional(),
+  alias: Joi.string().allow('', null).optional(),
 }).unknown(true);
 
 const NutrisiSchemaJoi = Joi.object().unknown(true);
@@ -17,8 +14,8 @@ const PendingItemSchemaJoi = Joi.object({
   pendingId: Joi.string().required(),
   name: Joi.string().required(),
   category: Joi.string().required(),
-  description: Joi.string().allow("", null),
-  img: Joi.string().uri().allow("", null),
+  description: Joi.string().allow('', null),
+  img: Joi.string().uri().allow('', null),
   bahan: Joi.array().items(BahanItemSchemaJoi),
   nutrisi_total: NutrisiSchemaJoi,
   submittedBy: Joi.object({
@@ -31,13 +28,12 @@ const PendingItemSchemaJoi = Joi.object({
 
 export default [
   {
-    method: "GET",
-    path: "/api/pending-items",
+    method: 'GET',
+    path: '/api/pending-items',
     options: {
-      auth: { strategy: "jwt", mode: "required" },
-      description:
-        "Dapatkan daftar makanan yang menunggu persetujuan (Admin/Moderator only)",
-      tags: ["api", "moderation"],
+      auth: { strategy: 'jwt', mode: 'required' },
+      description: 'Dapatkan daftar makanan yang menunggu persetujuan (Admin/Moderator only)',
+      tags: ['api', 'moderation'],
       validate: {
         query: Joi.object({
           page: Joi.number().integer().min(1).default(1),
@@ -47,7 +43,7 @@ export default [
       response: {
         status: {
           200: Joi.object({
-            status: Joi.string().valid("success").required(),
+            status: Joi.string().valid('success').required(),
             message: Joi.string().required(),
             data: Joi.array().items(PendingItemSchemaJoi).required(),
             pagination: Joi.object({
@@ -63,12 +59,12 @@ export default [
     },
   },
   {
-    method: "PATCH",
-    path: "/api/pending-items/{pendingId}/approve",
+    method: 'PATCH',
+    path: '/api/pending-items/{pendingId}/approve',
     options: {
-      auth: { strategy: "jwt", mode: "required" },
-      description: "Setujui pengajuan makanan (Admin/Moderator only)",
-      tags: ["api", "moderation"],
+      auth: { strategy: 'jwt', mode: 'required' },
+      description: 'Setujui pengajuan makanan (Admin/Moderator only)',
+      tags: ['api', 'moderation'],
       validate: {
         params: Joi.object({
           pendingId: Joi.string().required(),
@@ -77,12 +73,12 @@ export default [
       response: {
         status: {
           200: Joi.object({
-            status: Joi.string().valid("success").required(),
+            status: Joi.string().valid('success').required(),
             message: Joi.string().required(),
             data: Joi.object({
               itemId: Joi.string().required(),
               name: Joi.string().required(),
-              status: Joi.string().valid("approved").required(),
+              status: Joi.string().valid('approved').required(),
             }).required(),
           }),
         },
@@ -91,29 +87,29 @@ export default [
     },
   },
   {
-    method: "PATCH",
-    path: "/api/pending-items/{pendingId}/reject",
+    method: 'PATCH',
+    path: '/api/pending-items/{pendingId}/reject',
     options: {
-      auth: { strategy: "jwt", mode: "required" },
-      description: "Tolak pengajuan makanan (Admin/Moderator only)",
-      tags: ["api", "moderation"],
+      auth: { strategy: 'jwt', mode: 'required' },
+      description: 'Tolak pengajuan makanan (Admin/Moderator only)',
+      tags: ['api', 'moderation'],
       validate: {
         params: Joi.object({
           pendingId: Joi.string().required(),
         }),
         payload: Joi.object({
-          rejectionReason: Joi.string().optional().allow("", null),
+          rejectionReason: Joi.string().optional().allow('', null),
         }).optional(),
       },
       response: {
         status: {
           200: Joi.object({
-            status: Joi.string().valid("success").required(),
+            status: Joi.string().valid('success').required(),
             message: Joi.string().required(),
             data: Joi.object({
               pendingId: Joi.string().required(),
               name: Joi.string().required(),
-              status: Joi.string().valid("rejected").required(),
+              status: Joi.string().valid('rejected').required(),
             }).required(),
           }),
         },

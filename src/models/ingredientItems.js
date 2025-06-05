@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
 const IngredientsItemSchema = new Schema(
@@ -15,15 +15,12 @@ const IngredientsItemSchema = new Schema(
     },
   },
   {
-    collection: "ingredients",
+    collection: 'ingredients',
   }
 );
 
-IngredientsItemSchema.index({ IngredientEn: "text", IngredientId: "text" });
+IngredientsItemSchema.index({ IngredientEn: 'text', IngredientId: 'text' });
 
-const IngredientsItem = mongoose.model(
-  "IngredientsItem",
-  IngredientsItemSchema
-);
+const IngredientsItem = mongoose.model('IngredientsItem', IngredientsItemSchema);
 
 export default IngredientsItem;

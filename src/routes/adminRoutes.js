@@ -1,18 +1,14 @@
-import Joi from "joi";
-import {
-  getAllUsers,
-  changeUserRole,
-  deleteUserByAdmin,
-} from "../controllers/adminControllers.js";
+import Joi from 'joi';
+import { getAllUsers, changeUserRole, deleteUserByAdmin } from '../controllers/adminControllers.js';
 
 export default [
   {
-    method: "GET",
-    path: "/api/users",
+    method: 'GET',
+    path: '/api/users',
     options: {
-      auth: { strategy: "jwt", mode: "required" },
-      description: "Get list of all users (Admin only)",
-      tags: ["api", "admin"],
+      auth: { strategy: 'jwt', mode: 'required' },
+      description: 'Get list of all users (Admin only)',
+      tags: ['api', 'admin'],
       validate: {
         query: Joi.object({
           page: Joi.number().integer().min(1).default(1),
@@ -30,9 +26,7 @@ export default [
                     userId: Joi.string().required(),
                     name: Joi.string().required(),
                     email: Joi.string().email().required(),
-                    role: Joi.string()
-                      .valid("user", "moderator", "admin")
-                      .required(),
+                    role: Joi.string().valid('user', 'moderator', 'admin').required(),
                     isVerified: Joi.boolean().required(),
                     createdAt: Joi.string().isoDate().allow(null).required(),
                   })
@@ -52,28 +46,24 @@ export default [
     },
   },
   {
-    method: "PATCH",
-    path: "/api/users/{userIdToChange}/role",
+    method: 'PATCH',
+    path: '/api/users/{userIdToChange}/role',
     options: {
-      auth: { strategy: "jwt", mode: "required" },
-      description:
-        "Change a user's role (Admin only). Allowed roles: user, moderator, admin.",
-      tags: ["api", "admin"],
+      auth: { strategy: 'jwt', mode: 'required' },
+      description: "Change a user's role (Admin only). Allowed roles: user, moderator, admin.",
+      tags: ['api', 'admin'],
       validate: {
         params: Joi.object({
-          userIdToChange: Joi.string().required().description("ID Pengguna..."),
+          userIdToChange: Joi.string().required().description('ID Pengguna...'),
         }),
         payload: Joi.object({
-          newRole: Joi.string()
-            .valid("user", "moderator", "admin")
-            .required()
-            .description("Role baru..."),
+          newRole: Joi.string().valid('user', 'moderator', 'admin').required().description('Role baru...'),
         }),
       },
       response: {
         status: {
           200: Joi.object({
-            status: Joi.string().valid("success", "info").required(),
+            status: Joi.string().valid('success', 'info').required(),
             message: Joi.string().required(),
           }),
         },
@@ -82,15 +72,15 @@ export default [
     },
   },
   {
-    method: "DELETE",
-    path: "/api/users/{userIdToDelete}",
+    method: 'DELETE',
+    path: '/api/users/{userIdToDelete}',
     options: {
-      auth: { strategy: "jwt", mode: "required" },
-      description: "Delete a user account (Admin only)...",
-      tags: ["api", "admin"],
+      auth: { strategy: 'jwt', mode: 'required' },
+      description: 'Delete a user account (Admin only)...',
+      tags: ['api', 'admin'],
       validate: {
         params: Joi.object({
-          userIdToDelete: Joi.string().required().description("ID Pengguna..."),
+          userIdToDelete: Joi.string().required().description('ID Pengguna...'),
         }),
       },
       response: {
