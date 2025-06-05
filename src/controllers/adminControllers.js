@@ -1,11 +1,11 @@
-import User from "../models/user.js";
-import Boom from "@hapi/boom";
+import User from '../models/user.js';
+import Boom from '@hapi/boom';
 
 export const getAllUsers = async (request, h) => {
   try {
-    if (request.auth.credentials.role !== "admin") {
+    if (request.auth.credentials.role !== 'admin') {
       throw Boom.forbidden(
-        "Akses ditolak. Hanya admin yang dapat mengakses sumber daya ini."
+        'Akses ditolak. Hanya admin yang dapat mengakses sumber daya ini.'
       );
     }
 
@@ -14,7 +14,7 @@ export const getAllUsers = async (request, h) => {
     const skip = (page - 1) * limit;
 
     const usersQuery = User.find()
-      .select("name email role isVerified createdAt")
+      .select('name email role isVerified createdAt')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -39,7 +39,7 @@ export const getAllUsers = async (request, h) => {
 
     return h
       .response({
-        status: "success",
+        status: 'success',
         data: {
           users: formattedUsers,
           pagination: {
@@ -55,18 +55,18 @@ export const getAllUsers = async (request, h) => {
     if (err.isBoom) {
       throw err;
     }
-    console.error("Error getting all users:", err.message, err.stack);
+    console.error('Error getting all users:', err.message, err.stack);
     throw Boom.internal(
-      "Terjadi kesalahan pada server saat mengambil daftar pengguna."
+      'Terjadi kesalahan pada server saat mengambil daftar pengguna.'
     );
   }
 };
 
 export const changeUserRole = async (request, h) => {
   try {
-    if (request.auth.credentials.role !== "admin") {
+    if (request.auth.credentials.role !== 'admin') {
       throw Boom.forbidden(
-        "Akses ditolak. Hanya admin yang dapat melakukan aksi ini."
+        'Akses ditolak. Hanya admin yang dapat melakukan aksi ini.'
       );
     }
 
@@ -75,36 +75,36 @@ export const changeUserRole = async (request, h) => {
 
     const adminMakingRequest = request.auth.credentials.id;
 
-    const allowedRoles = ["user", "moderator", "admin"];
+    const allowedRoles = ['user', 'moderator', 'admin'];
     if (!allowedRoles.includes(newRole)) {
       throw Boom.badRequest(
-        `Role target tidak valid. Pilih dari: ${allowedRoles.join(", ")}`
+        `Role target tidak valid. Pilih dari: ${allowedRoles.join(', ')}`
       );
     }
 
     const userToChange = await User.findById(userIdToChange);
     if (!userToChange) {
-      throw Boom.notFound("Pengguna yang akan diubah rolenya tidak ditemukan.");
+      throw Boom.notFound('Pengguna yang akan diubah rolenya tidak ditemukan.');
     }
 
     if (userToChange._id.toString() === adminMakingRequest) {
       throw Boom.badRequest(
-        "Admin tidak dapat mengubah role dirinya sendiri melalui endpoint ini."
+        'Admin tidak dapat mengubah role dirinya sendiri melalui endpoint ini.'
       );
     }
 
     if (userToChange.role === newRole) {
       return h
         .response({
-          status: "info",
+          status: 'info',
           message: `Pengguna sudah memiliki role '${newRole}'. Tidak ada perubahan.`,
         })
         .code(200);
     }
 
-    if (userToChange.role === "admin" && newRole !== "admin") {
+    if (userToChange.role === 'admin' && newRole !== 'admin') {
       throw Boom.forbidden(
-        "Admin tidak dapat menurunkan role admin lain melalui endpoint ini."
+        'Admin tidak dapat menurunkan role admin lain melalui endpoint ini.'
       );
     }
 
@@ -113,7 +113,7 @@ export const changeUserRole = async (request, h) => {
 
     return h
       .response({
-        status: "success",
+        status: 'success',
         message: `Role pengguna ${userToChange.name} berhasil diubah menjadi ${newRole}.`,
       })
       .code(200);
@@ -121,18 +121,18 @@ export const changeUserRole = async (request, h) => {
     if (err.isBoom) {
       throw err;
     }
-    console.error("Error changing user role:", err.message, err.stack);
+    console.error('Error changing user role:', err.message, err.stack);
     throw Boom.internal(
-      "Terjadi kesalahan pada server saat mengubah role pengguna."
+      'Terjadi kesalahan pada server saat mengubah role pengguna.'
     );
   }
 };
 
 export const deleteUserByAdmin = async (request, h) => {
   try {
-    if (request.auth.credentials.role !== "admin") {
+    if (request.auth.credentials.role !== 'admin') {
       throw Boom.forbidden(
-        "Akses ditolak. Hanya admin yang dapat melakukan aksi ini."
+        'Akses ditolak. Hanya admin yang dapat melakukan aksi ini.'
       );
     }
 
@@ -141,24 +141,24 @@ export const deleteUserByAdmin = async (request, h) => {
 
     if (adminMakingRequest === userIdToDelete) {
       throw Boom.badRequest(
-        "Admin tidak dapat menghapus akunnya sendiri melalui endpoint ini."
+        'Admin tidak dapat menghapus akunnya sendiri melalui endpoint ini.'
       );
     }
 
     const userToDelete = await User.findById(userIdToDelete);
     if (!userToDelete) {
-      throw Boom.notFound("Pengguna yang akan dihapus tidak ditemukan.");
+      throw Boom.notFound('Pengguna yang akan dihapus tidak ditemukan.');
     }
 
-    if (userToDelete.role === "admin") {
-      throw Boom.forbidden("Admin tidak diizinkan menghapus akun admin lain.");
+    if (userToDelete.role === 'admin') {
+      throw Boom.forbidden('Admin tidak diizinkan menghapus akun admin lain.');
     }
 
     await User.findByIdAndDelete(userIdToDelete);
 
     return h
       .response({
-        status: "success",
+        status: 'success',
         message: `Pengguna ${userToDelete.name} berhasil dihapus.`,
       })
       .code(200);
@@ -166,9 +166,9 @@ export const deleteUserByAdmin = async (request, h) => {
     if (err.isBoom) {
       throw err;
     }
-    console.error("Error deleting user by admin:", err.message, err.stack);
+    console.error('Error deleting user by admin:', err.message, err.stack);
     throw Boom.internal(
-      "Terjadi kesalahan pada server saat menghapus pengguna."
+      'Terjadi kesalahan pada server saat menghapus pengguna.'
     );
   }
 };

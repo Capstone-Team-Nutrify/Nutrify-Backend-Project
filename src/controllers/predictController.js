@@ -1,36 +1,46 @@
+import { getPredictionFromML } from '../services/mlService';
+
 export const predictHandler = async (request, h) => {
-  const { ingeredient, dose } = request.payload;
+  const { ingredients } = request.payload;
 
   if (
-    !Array.isArray(ingeredient) ||
-    !Array.isArray(dose) ||
-    ingeredient.length === 0 ||
-    dose.length === 0
+    !Array.isArray(ingredients) ||
+    ingredients.length === 0 ||
+    ingredients.some(
+      (ing) =>
+        typeof ing.ingredientName !== 'string' ||
+        typeof ing.ingredientDose !== 'number'
+    )
   ) {
     return h
       .response({
         success: false,
-        message: "ingeredient and Dose must be non-empty arrays",
+        message:
+          'ingredients must be a non-empty array of { ingredientName, ingredientDose } objects',
       })
       .code(400);
   }
 
   try {
-    const predictionResult = await getPredictionFromML(ingeredient, dose);
+    const prediction = await getPredictionFromML(
+      ingredients.map((ing) => ({
+        ingredient: ing.ingredientName,
+        dose: ing.ingredientDose,
+      }))
+    );
 
     return h
       .response({
         success: true,
-        input_ingeredient: ingeredient,
-        input_dose: dose,
-        prediction: predictionResult,
+        inputIngredients: ingredients,
+        prediction,
       })
       .code(200);
   } catch (err) {
     return h
       .response({
         success: false,
-        message: "Failed to get prediction from ML API",
+        message: 'Failed to get prediction from ML API',
         error: err.message,
       })
       .code(500);

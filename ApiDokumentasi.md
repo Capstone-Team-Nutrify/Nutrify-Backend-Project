@@ -1,4 +1,4 @@
-```markdown
+````markdown
 ## Nutrify API Docs
 
 ## Auth Collection
@@ -16,13 +16,14 @@
   "password": "johndoe1234"
 }
 ```
+````
 
 - **Response**: 201
 
 ```json
 {
-    "status": "success",
-    "message": "Registrasi berhasil" // atau "Registrasi berhasil sebagai admin." jika user pertama
+  "status": "success",
+  "message": "Registrasi berhasil" // atau "Registrasi berhasil sebagai admin." jika user pertama
 }
 ```
 
@@ -71,8 +72,8 @@
 
 ```json
 {
-    "status": "error",
-    "message": "Invalid request payload input"
+  "status": "error",
+  "message": "Invalid request payload input"
 }
 ```
 
@@ -80,8 +81,8 @@
 
 ```json
 {
-    "status": "error",
-    "message": "Email atau password Salah"
+  "status": "error",
+  "message": "Email atau password Salah"
 }
 ```
 
@@ -96,7 +97,7 @@
 ```json
 {
   "status": "success",
-  "message": "Logout berhasil",
+  "message": "Logout berhasil"
 }
 ```
 
@@ -145,10 +146,9 @@
     "isVerified": false,
     "createdAt": "2024-01-15T08:00:00.000Z",
     "updatedAt": "2024-01-15T08:30:00.000Z"
-    }
+  }
 }
 ```
-
 
 ### PUT /api/auth/profile
 
@@ -166,21 +166,20 @@
 }
 ```
 
-
 - **Response**: 200
 
 ```json
 {
-    "status": "success",
-    "message": "Profile updated successfully", 
-    "data": { 
-        "userId": "6832cbdea23729284f3801b4",
-        "name": "John Doe", // Nama tidak bisa diubah melalui endpoint ini
-        "age": 30,
-        "height": 175,
-        "weight": 68,
-        "updatedAt": "2024-01-16T10:30:00.000Z"
-    }
+  "status": "success",
+  "message": "Profile updated successfully",
+  "data": {
+    "userId": "6832cbdea23729284f3801b4",
+    "name": "John Doe", // Nama tidak bisa diubah melalui endpoint ini
+    "age": 30,
+    "height": 175,
+    "weight": 68,
+    "updatedAt": "2024-01-16T10:30:00.000Z"
+  }
 }
 ```
 
@@ -193,7 +192,6 @@
 }
 ```
 
-
 - **Response**: 413
 
 ```json
@@ -203,7 +201,6 @@
 }
 ```
 
-
 ### GET /api/auth/profile-picture
 
 - **Description**: Get user profile picture
@@ -211,10 +208,9 @@
 - **Request Body**: None
 
 - **Response**: 200
-  - **Content-Type**: `image/png`  
+
+  - **Content-Type**: `image/png`
   - **Body**: Data biner gambar
-
-
 
 - **Response**: 404
 
@@ -270,12 +266,13 @@
   }
 }
 ```
+
 - **Response**: 403 (Contoh: diakses oleh non-admin)
 
-```json 
+```json
 {
-    "status": "fail",
-    "message": "Akses ditolak. Hanya admin yang dapat mengakses sumber daya ini."
+  "status": "fail",
+  "message": "Akses ditolak. Hanya admin yang dapat mengakses sumber daya ini."
 }
 ```
 
@@ -289,7 +286,7 @@
 
 - **Request Body**: Yes
 
-```json 
+```json
 {
   "newRole": "moderator" // atau "user", "admin"
 }
@@ -297,36 +294,37 @@
 
 - **Response**: 200
 
-```json 
+```json
 {
-  "status": "success", 
+  "status": "success",
   "message": "Role pengguna [Nama Pengguna] berhasil diubah menjadi [newRole]." // atau "Pengguna sudah memiliki role '[newRole]'. Tidak ada perubahan."
 }
 ```
+
 - **Response**: 400 (Contoh: role tidak valid, mencoba mengubah role diri sendiri)
 
-```json 
+```json
 {
-    "status": "fail",
-    "message": "Role target tidak valid. Pilih dari: user, moderator, admin" // atau "Admin tidak dapat mengubah role dirinya sendiri melalui endpoint ini."
+  "status": "fail",
+  "message": "Role target tidak valid. Pilih dari: user, moderator, admin" // atau "Admin tidak dapat mengubah role dirinya sendiri melalui endpoint ini."
 }
 ```
 
 - **Response**: 403 (Contoh: mencoba menurunkan role admin lain)
 
-```json 
+```json
 {
-    "status": "fail",
-    "message": "Admin tidak dapat menurunkan role admin lain melalui endpoint ini."
+  "status": "fail",
+  "message": "Admin tidak dapat menurunkan role admin lain melalui endpoint ini."
 }
 ```
 
 - **Response**: 404 (Contoh: user tidak ditemukan)
 
-```json 
+```json
 {
-    "status": "fail",
-    "message": "Pengguna yang akan diubah rolenya tidak ditemukan."
+  "status": "fail",
+  "message": "Pengguna yang akan diubah rolenya tidak ditemukan."
 }
 ```
 
@@ -342,7 +340,7 @@
 
 - **Response**: 200
 
-```json 
+```json
 {
   "status": "success",
   "message": "Pengguna [Nama Pengguna] berhasil dihapus."
@@ -351,28 +349,28 @@
 
 - **Response**: 400 (Contoh: mencoba menghapus diri sendiri)
 
-```json 
+```json
 {
-    "status": "fail",
-    "message": "Admin tidak dapat menghapus akunnya sendiri melalui endpoint ini."
+  "status": "fail",
+  "message": "Admin tidak dapat menghapus akunnya sendiri melalui endpoint ini."
 }
 ```
 
 - **Response**: 403 (Contoh: mencoba menghapus admin lain)
 
-```json 
+```json
 {
-    "status": "fail",
-    "message": "Admin tidak diizinkan menghapus akun admin lain."
+  "status": "fail",
+  "message": "Admin tidak diizinkan menghapus akun admin lain."
 }
 ```
 
 - **Response**: 404 (Contoh: user tidak ditemukan)
 
-```json 
+```json
 {
-    "status": "fail",
-    "message": "Pengguna yang akan dihapus tidak ditemukan."
+  "status": "fail",
+  "message": "Pengguna yang akan dihapus tidak ditemukan."
 }
 ```
 
@@ -382,40 +380,37 @@
 
 ```json
 {
-    "id": "string (MongoDB ObjectId)",
-    "nama": "string",
-    "asal": "string (opsional)",
-    "kategori": "string",
-    "deskripsi": "string (opsional)",
-    "foto_url": "string (URL, opsional)",
-    "bahan": [
-        { "nama": "string", "jumlah": "string", "alias": "string (opsional)" }
-    ],
-    "nutrisi_per_100g": {
-        // contoh field, bisa lebih banyak
-        "kalori": "number",
-        "lemak": "number",
-        "karbohidrat": "number",
-        "protein": "number",
-        "serat": "number",
-        "kolesterol": "number",
-        "natrium": "number",
-        "vitamin_C": "number"
-        // ... struktur vitamin dan mineral jika didefinisikan detail
-    },
-    "disease_rate": [ 
-        { "penyakit": "string", "peringatan": "string", "catatan": "string" }
-    ],
-    "createdAt": "string (ISO 8601 date)",
-    "updatedAt": "string (ISO 8601 date)"
+  "id": "string (MongoDB ObjectId)",
+  "nama": "string",
+  "asal": "string (opsional)",
+  "kategori": "string",
+  "deskripsi": "string (opsional)",
+  "foto_url": "string (URL, opsional)",
+  "bahan": [
+    { "nama": "string", "jumlah": "string", "alias": "string (opsional)" }
+  ],
+  "nutrisi_per_100g": {
+    // contoh field, bisa lebih banyak
+    "kalori": "number",
+    "lemak": "number",
+    "karbohidrat": "number",
+    "protein": "number",
+    "serat": "number",
+    "kolesterol": "number",
+    "natrium": "number",
+    "vitamin_C": "number"
+    // ... struktur vitamin dan mineral jika didefinisikan detail
+  },
+  "diseaseRate": [
+    { "penyakit": "string", "peringatan": "string", "catatan": "string" }
+  ],
+  "createdAt": "string (ISO 8601 date)",
+  "updatedAt": "string (ISO 8601 date)"
 }
 ```
 
-
 ## Catatan
+
 - **Autentikasi**: Semua titik akhir yang memerlukan autentikasi menggunakan JWT. Token dikirim via cookie jwt (dibaca otomatis oleh server) atau header Authorization: Bearer {token}.
 - **Unggahan Berkas**: Unggahan gambar profil dibatasi hingga 5 MB dan harus dalam format JPEG atau PNG.
-- **Role** : 
-            - `user`: Bisa mengajukan makanan baru (status pending), mengelola profil sendiri.
-            - `moderator`: Bisa mengajukan makanan baru (langsung approved), me-review (approve/reject) makanan pending.
-            - `admin`: Semua hak moderator, ditambah mengelola pengguna (get all, change role, delete user).
+- **Role** : - `user`: Bisa mengajukan makanan baru (status pending), mengelola profil sendiri. - `moderator`: Bisa mengajukan makanan baru (langsung approved), me-review (approve/reject) makanan pending. - `admin`: Semua hak moderator, ditambah mengelola pengguna (get all, change role, delete user).

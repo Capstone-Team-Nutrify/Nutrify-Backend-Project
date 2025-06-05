@@ -1,4 +1,4 @@
-import IngredientsItem from "../models/ingredientItems.js";
+import IngredientsItem from '../models/ingredientItems.js';
 
 export const getIngredients = async (request, h) => {
   try {
@@ -9,7 +9,7 @@ export const getIngredients = async (request, h) => {
 
     // Normalisasi keyword pencarian: lowercase, hapus spasi, underscore, dash
     const normalizedSearch = search
-      ? search.toLowerCase().replace(/[\s_-]/g, "")
+      ? search.toLowerCase().replace(/[\s_-]/g, '')
       : null;
 
     // Aggregation pipeline
@@ -24,17 +24,17 @@ export const getIngredients = async (request, h) => {
                 $replaceAll: {
                   input: {
                     $replaceAll: {
-                      input: { $toLower: "$IngredientEn" },
-                      find: " ",
-                      replacement: "",
+                      input: { $toLower: '$IngredientEn' },
+                      find: ' ',
+                      replacement: '',
                     },
                   },
-                  find: "_",
-                  replacement: "",
+                  find: '_',
+                  replacement: '',
                 },
               },
-              find: "-",
-              replacement: "",
+              find: '-',
+              replacement: '',
             },
           },
           normalizedIngredientId: {
@@ -43,17 +43,17 @@ export const getIngredients = async (request, h) => {
                 $replaceAll: {
                   input: {
                     $replaceAll: {
-                      input: { $toLower: "$IngredientId" },
-                      find: " ",
-                      replacement: "",
+                      input: { $toLower: '$IngredientId' },
+                      find: ' ',
+                      replacement: '',
                     },
                   },
-                  find: "_",
-                  replacement: "",
+                  find: '_',
+                  replacement: '',
                 },
               },
-              find: "-",
-              replacement: "",
+              find: '-',
+              replacement: '',
             },
           },
         },
@@ -65,13 +65,13 @@ export const getIngredients = async (request, h) => {
             {
               normalizedIngredientEn: {
                 $regex: normalizedSearch,
-                $options: "i",
+                $options: 'i',
               },
             },
             {
               normalizedIngredientId: {
                 $regex: normalizedSearch,
-                $options: "i",
+                $options: 'i',
               },
             },
           ],
@@ -88,7 +88,7 @@ export const getIngredients = async (request, h) => {
     // Total count untuk pagination (hitung setelah filter)
     const total = await IngredientsItem.aggregate([
       ...pipeline.slice(0, pipeline.length - 3), // tanpa $skip dan $limit
-      { $count: "count" },
+      { $count: 'count' },
     ]);
     const totalCount = total[0]?.count || 0;
 
@@ -112,7 +112,7 @@ export const getIngredients = async (request, h) => {
     return h
       .response({
         success: false,
-        message: "Error fetching ingredients",
+        message: 'Error fetching ingredients',
         error: error.message,
       })
       .code(500);

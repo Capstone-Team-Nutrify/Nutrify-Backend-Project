@@ -1,5 +1,5 @@
 // import { boolean, number } from "joi";
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
 const BahanSchema = new Schema(
@@ -13,18 +13,18 @@ const BahanSchema = new Schema(
 
 const VitaminSchema = new Schema(
   {
-    vitamin_A: Number,
-    vitamin_B1: Number,
-    vitamin_B2: Number,
-    vitamin_B3: Number,
-    vitamin_B5: Number,
-    vitamin_B6: Number,
-    vitamin_B11: Number,
-    vitamin_B12: Number,
-    vitamin_C: Number,
-    vitamin_D: Number,
-    vitamin_E: Number,
-    vitamin_K: Number,
+    vitaminA: Number,
+    vitaminB1: Number,
+    vitaminB2: Number,
+    vitaminB3: Number,
+    vitaminB5: Number,
+    vitaminB6: Number,
+    vitaminB11: Number,
+    vitaminB12: Number,
+    vitaminC: Number,
+    vitaminD: Number,
+    vitaminE: Number,
+    vitaminK: Number,
   },
   { _id: false }
 );
@@ -61,8 +61,8 @@ const NutrisiSchema = new Schema(
 const DiseaseRateSchema = new Schema(
   {
     disease: String,
-    warning: String,
-    note: String,
+    status: String,
+    level: String,
   },
   { _id: false }
 );
@@ -95,12 +95,16 @@ const ItemSchema = new Schema(
       trim: true,
     },
     ingredients: [BahanSchema],
-    nutrisi_total: NutrisiSchema,
-    disease_rate: [DiseaseRateSchema],
-    submittedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    nutritionTotal: NutrisiSchema,
+    diseaseRate: [DiseaseRateSchema],
+    status: {
+      type: String,
+      trim: true,
+    },
+    submittedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     submittedAt: { type: Date, default: Date.now },
-    reviewedBy: { type: Schema.Types.ObjectId, ref: "Admin" },
-    reviewedAt: { type: Date },
+    reviewedBy: { type: Schema.Types.ObjectId, ref: 'Admin' },
+    reviewedAt: { type: Date, default: Date.now },
     isPublic: {
       type: Boolean,
       default: false,
@@ -108,12 +112,12 @@ const ItemSchema = new Schema(
   },
   {
     timestamps: true,
-    collection: "items",
+    collection: 'items',
   }
 );
 
-ItemSchema.index({ name: "text", origin: "text", category: "text" });
+ItemSchema.index({ name: 'text', origin: 'text', category: 'text' });
 
-const Item = mongoose.model("Item", ItemSchema);
+const Item = mongoose.model('Item', ItemSchema);
 
 export default Item;

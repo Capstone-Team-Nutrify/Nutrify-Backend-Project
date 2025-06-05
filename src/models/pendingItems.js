@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
 const BahanSchema = new Schema(
@@ -12,18 +12,18 @@ const BahanSchema = new Schema(
 
 const VitaminSchema = new Schema(
   {
-    vitamin_A: Number,
-    vitamin_B1: Number,
-    vitamin_B2: Number,
-    vitamin_B3: Number,
-    vitamin_B5: Number,
-    vitamin_B6: Number,
-    vitamin_B11: Number,
-    vitamin_B12: Number,
-    vitamin_C: Number,
-    vitamin_D: Number,
-    vitamin_E: Number,
-    vitamin_K: Number,
+    vitaminA: Number,
+    vitaminB1: Number,
+    vitaminB2: Number,
+    vitaminB3: Number,
+    vitaminB5: Number,
+    vitaminB6: Number,
+    vitaminB11: Number,
+    vitaminB12: Number,
+    vitaminC: Number,
+    vitaminD: Number,
+    vitaminE: Number,
+    vitaminK: Number,
   },
   { _id: false }
 );
@@ -80,21 +80,25 @@ const PendingItemSchema = new Schema(
       type: String,
       trim: true,
     },
+    origin: {
+      type: String,
+      trim: true,
+    },
     ingredients: [BahanSchema],
-    nutrisi_total: NutrisiSchema,
+    nutritionTotal: NutrisiSchema,
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "pending",
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
       required: true,
     },
     submittedBy: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
       required: true,
     },
     reviewNotes: String,
-    reviewedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     reviewedAt: Date,
   },
   {
@@ -102,8 +106,8 @@ const PendingItemSchema = new Schema(
   }
 );
 
-PendingItemSchema.index({ name: "text", category: "text", status: 1 });
+PendingItemSchema.index({ name: 'text', category: 'text', status: 1 });
 
-const pendingItem = mongoose.model("PendingItem", PendingItemSchema);
+const pendingItem = mongoose.model('PendingItem', PendingItemSchema);
 
 export default pendingItem;

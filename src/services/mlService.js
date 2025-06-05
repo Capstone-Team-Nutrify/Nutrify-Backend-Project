@@ -1,28 +1,23 @@
-import axios from "axios";
+import axios from 'axios';
 
-export const getPredictionFromML = async (ingredient, dose) => {
+export const getPredictionFromML = async (foodList) => {
   try {
     const response = await axios.post(
       process.env.ML_API_URI,
       {
-        food: [
-          {
-            ingredient,
-            dose,
-          },
-        ],
+        food: foodList,
       },
       {
         headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
       }
     );
 
     return response.data;
   } catch (error) {
-    const message = error.response?.data?.message || "ML API error";
+    const message = error.response?.data?.message || 'ML API error';
     throw new Error(message);
   }
 };

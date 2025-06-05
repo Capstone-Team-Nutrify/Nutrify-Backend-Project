@@ -1,15 +1,15 @@
-import PendingItem from "../models/pendingItems.js";
-import Item from "../models/items.js";
-import User from "../models/user.js";
-import Boom from "@hapi/boom";
-import mongoose from "mongoose";
+import PendingItem from '../models/pendingItems.js';
+import Item from '../models/items.js';
+import Boom from '@hapi/boom';
+import mongoose from 'mongoose';
+import { getPredictionFromML } from '../services/mlService.js';
 
 export const getPendingItems = async (request, h) => {
   try {
     const userRole = request.auth.credentials.role;
-    if (userRole !== "admin" && userRole !== "moderator") {
+    if (userRole !== 'admin' && userRole !== 'moderator') {
       throw Boom.forbidden(
-        "Akses ditolak. Hanya admin atau moderator yang dapat mengakses sumber daya ini."
+        'Akses ditolak. Hanya admin atau moderator yang dapat mengakses sumber daya ini.'
       );
     }
 
@@ -17,14 +17,14 @@ export const getPendingItems = async (request, h) => {
     const limit = parseInt(request.query.limit, 10) || 10;
     const skip = (page - 1) * limit;
 
-    const pendingItemsQuery = PendingItem.find({ status: "pending" })
-      .populate("submittedBy", "name email")
+    const pendingItemsQuery = PendingItem.find({ status: 'pending' })
+      .populate('submittedBy', 'name email')
       .sort({ createdAt: 1 })
       .skip(skip)
       .limit(limit);
 
     const totalPendingItemsQuery = PendingItem.countDocuments({
-      status: "pending",
+      status: 'pending',
     });
 
     const [pendingItems, totalItems] = await Promise.all([
@@ -37,25 +37,29 @@ export const getPendingItems = async (request, h) => {
     const formattedPendingItems = pendingItems.map((item) => ({
       pendingId: item._id.toString(),
       name: item.name,
+      nation: item.nation,
       category: item.category,
       description: item.description,
       img: item.img,
-      ingredients: item.ingredients,
-      nutrisi_total: item.nutrisi_total,
+      ingredients: item.ingredients.map((ing) => ({
+        ingredientName: ing.ingredientName,
+        ingredientDose: ing.ingredientDose,
+        ingredientAlias: ing.ingredientAlias,
+      })),
       submittedBy: item.submittedBy
         ? {
-            userId: item.submittedBy._id.toString(),
-            name: item.submittedBy.name,
-            email: item.submittedBy.email,
-          }
+          userId: item.submittedBy._id.toString(),
+          name: item.submittedBy.name,
+          email: item.submittedBy.email,
+        }
         : null,
       submittedAt: item.createdAt ? item.createdAt.toISOString() : null,
     }));
 
     return h
       .response({
-        status: "success",
-        message: "Daftar makanan pending berhasil diambil.",
+        status: 'success',
+        message: 'Daftar makanan pending berhasil diambil.',
         data: formattedPendingItems,
         pagination: {
           currentPage: page,
@@ -67,9 +71,9 @@ export const getPendingItems = async (request, h) => {
       .code(200);
   } catch (err) {
     if (err.isBoom) throw err;
-    console.error("Error getting pending items:", err.message, err.stack);
+    console.error('Error getting pending items:', err.message, err.stack);
     throw Boom.internal(
-      "Terjadi kesalahan pada server saat mengambil data pending."
+      'Terjadi kesalahan pada server saat mengambil data pending.'
     );
   }
 };
@@ -77,69 +81,87 @@ export const getPendingItems = async (request, h) => {
 export const approvePendingItem = async (request, h) => {
   try {
     const userRole = request.auth.credentials.role;
-    if (userRole !== "admin" && userRole !== "moderator") {
+    if (userRole !== 'admin' && userRole !== 'moderator') {
       throw Boom.forbidden(
-        "Akses ditolak. Hanya admin atau moderator yang dapat melakukan aksi ini."
+        'Akses ditolak. Hanya admin atau moderator yang dapat melakukan aksi ini.'
       );
     }
 
     const { pendingId } = request.params;
     if (!mongoose.Types.ObjectId.isValid(pendingId)) {
-      throw Boom.badRequest("Format ID pending tidak valid.");
+      throw Boom.badRequest('Format ID pending tidak valid.');
     }
 
     const pendingItem = await PendingItem.findById(pendingId);
     if (!pendingItem) {
-      throw Boom.notFound("Item makanan pending tidak ditemukan.");
+      throw Boom.notFound('Item makanan pending tidak ditemukan.');
     }
-    if (pendingItem.status !== "pending") {
+    if (pendingItem.status !== 'pending') {
       throw Boom.badRequest(
         `Item ini sudah di-${pendingItem.status}, tidak bisa disetujui lagi.`
       );
     }
 
+    const prediction = await getPredictionFromML(
+      pendingItem.ingredients.map((ing) => ({
+        ingredient: ing.ingredientName,
+        dose: ing.ingredientDose,
+      }))
+    );
+
+    const nutritionTotal = prediction?.predict?.total_nutrition || {};
+    const diseaseRate = prediction?.predict?.disease_rate || [];
+
     const itemData = {
       name: pendingItem.name,
+      nation: pendingItem.nation,
       category: pendingItem.category,
       description: pendingItem.description,
-      img: pendingItem.img,
-      ingredients: pendingItem.ingredients,
-      nutrisi_total: pendingItem.nutrisi_total,
-      asal: pendingItem.asal,
-      disease_rate: pendingItem.disease_rate,
+      image: pendingItem.image,
+      origin: pendingItem.origin,
+      ingredients: pendingItem.ingredients.map((ing) => ({
+        ingredientName: ing.ingredientName,
+        ingredientDose: ing.ingredientDose,
+        ingredientAlias: ing.ingredientAlias,
+      })),
+      nutritionTotal: nutritionTotal,
+      diseaseRate: diseaseRate,
     };
 
     const existingItem = await Item.findOne({ name: itemData.name });
     if (existingItem) {
-      pendingItem.status = "rejected";
+      pendingItem.status = 'rejected';
       await pendingItem.save();
       throw Boom.conflict(
         `Makanan dengan name '${itemData.name}' sudah ada di daftar utama. Pengajuan ini ditolak.`
       );
     }
 
-    const newItem = new Item(itemData);
+    const newItem = new Item({
+      ...itemData,
+      status: 'approved', // Set status langsung di sini
+    });
     await newItem.save();
 
-    pendingItem.status = "approved";
+    pendingItem.status = 'approved';
     await pendingItem.save();
 
     return h
       .response({
-        status: "success",
+        status: 'success',
         message: `Makanan '${newItem.name}' berhasil disetujui dan ditambahkan.`,
         data: {
           itemId: newItem._id.toString(),
           name: newItem.name,
-          status: "approved",
+          status: 'approved',
         },
       })
       .code(200);
   } catch (err) {
     if (err.isBoom) throw err;
-    console.error("Error approving item:", err.message, err.stack);
+    console.error('Error approving item:', err.message, err.stack);
     throw Boom.internal(
-      "Terjadi kesalahan pada server saat menyetujui makanan."
+      'Terjadi kesalahan pada server saat menyetujui makanan.'
     );
   }
 };
@@ -147,9 +169,9 @@ export const approvePendingItem = async (request, h) => {
 export const rejectPendingItem = async (request, h) => {
   try {
     const userRole = request.auth.credentials.role;
-    if (userRole !== "admin" && userRole !== "moderator") {
+    if (userRole !== 'admin' && userRole !== 'moderator') {
       throw Boom.forbidden(
-        "Akses ditolak. Hanya admin atau moderator yang dapat melakukan aksi ini."
+        'Akses ditolak. Hanya admin atau moderator yang dapat melakukan aksi ini.'
       );
     }
 
@@ -157,37 +179,37 @@ export const rejectPendingItem = async (request, h) => {
     const { rejectionReason } = request.payload || {};
 
     if (!mongoose.Types.ObjectId.isValid(pendingId)) {
-      throw Boom.badRequest("Format ID pending tidak valid.");
+      throw Boom.badRequest('Format ID pending tidak valid.');
     }
 
     const pendingItem = await PendingItem.findById(pendingId);
     if (!pendingItem) {
-      throw Boom.notFound("Item makanan pending tidak ditemukan.");
+      throw Boom.notFound('Item makanan pending tidak ditemukan.');
     }
-    if (pendingItem.status !== "pending") {
+    if (pendingItem.status !== 'pending') {
       throw Boom.badRequest(
         `Item ini sudah di-${pendingItem.status}, tidak bisa ditolak lagi.`
       );
     }
 
-    pendingItem.status = "rejected";
-    pendingItem.reviewNotes = rejectionReason || "Tidak ada alasan spesifik.";
+    pendingItem.status = 'rejected';
+    pendingItem.reviewNotes = rejectionReason || 'Tidak ada alasan spesifik.';
     await pendingItem.save();
 
     return h
       .response({
-        status: "success",
+        status: 'success',
         message: `Pengajuan makanan '${pendingItem.name}' berhasil ditolak.`,
         data: {
           pendingId: pendingItem._id.toString(),
           name: pendingItem.name,
-          status: "rejected",
+          status: 'rejected',
         },
       })
       .code(200);
   } catch (err) {
     if (err.isBoom) throw err;
-    console.error("Error rejecting item:", err.message, err.stack);
-    throw Boom.internal("Terjadi kesalahan pada server saat menolak makanan.");
+    console.error('Error rejecting item:', err.message, err.stack);
+    throw Boom.internal('Terjadi kesalahan pada server saat menolak makanan.');
   }
 };

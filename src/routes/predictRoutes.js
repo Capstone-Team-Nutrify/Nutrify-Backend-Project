@@ -1,13 +1,13 @@
-import { predictHandler } from "../controllers/predictController.js";
+import { predictHandler } from '../controllers/predictController.js';
 
 const predictionRoutes = [
   {
-    method: "POST",
-    path: "/predict",
+    method: 'POST',
+    path: '/predict',
     handler: predictHandler,
     options: {
-      description: "Prediction disease rate from ML API",
-      tags: ["api"],
+      description: 'Prediction disease rate from ML API',
+      tags: ['api'],
       auth: false,
     },
   },

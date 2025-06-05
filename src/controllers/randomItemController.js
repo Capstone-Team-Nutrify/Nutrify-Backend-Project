@@ -1,4 +1,4 @@
-import Item from "../models/items.js";
+import Item from '../models/items.js';
 
 export const getRandomItems = async (request, h) => {
   try {
@@ -11,7 +11,7 @@ export const getRandomItems = async (request, h) => {
       return h
         .response({
           success: false,
-          message: "No items found",
+          message: 'No items found',
         })
         .code(404);
     }
@@ -26,7 +26,7 @@ export const getRandomItems = async (request, h) => {
     return h
       .response({
         success: false,
-        message: "Error fetching random items",
+        message: 'Error fetching random items',
         error: error.message,
       })
       .code(500);
