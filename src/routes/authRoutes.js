@@ -1,21 +1,14 @@
-import Joi from "joi";
-import {
-  registerUser,
-  loginUser,
-  logoutUser,
-  currentUser,
-  updateProfile,
-  getProfilePicture
-} from "../controllers/authControllers.js";
+import Joi from 'joi';
+import { registerUser, loginUser, logoutUser, currentUser, updateProfile, getProfilePicture } from '../controllers/authControllers.js';
 
 export default [
   {
-    method: "POST",
-    path: "/api/auth/register",
+    method: 'POST',
+    path: '/api/register',
     options: {
       auth: false,
-      description: "Registrasi pengguna baru",
-      tags: ["api", "auth"],
+      description: 'Registrasi pengguna baru',
+      tags: ['api', 'auth'],
       validate: {
         payload: Joi.object({
           name: Joi.string().min(3).required().description('Nama pengguna...'),
@@ -27,21 +20,21 @@ export default [
       response: {
         status: {
           201: Joi.object({
-            status: Joi.string().valid("success").required(),
+            status: Joi.string().valid('success').required(),
             message: Joi.string().required(),
-          }).example({ status: "success", message: "Registrasi berhasil" }),
+          }).example({ status: 'success', message: 'Registrasi berhasil' }),
         },
       },
       handler: registerUser,
     },
   },
   {
-    method: "POST",
-    path: "/api/auth/login",
+    method: 'POST',
+    path: '/api/login',
     options: {
       auth: false,
-      description: "Login pengguna",
-      tags: ["api", "auth"],
+      description: 'Login pengguna',
+      tags: ['api', 'auth'],
       validate: {
         payload: Joi.object({
           email: Joi.string().email().required(),
@@ -52,44 +45,48 @@ export default [
       response: {
         status: {
           200: Joi.object({
-            status: Joi.string().valid("success").required(),
+            status: Joi.string().valid('success').required(),
             message: Joi.string().required(),
             accessToken: Joi.string().required(),
-          }).example({ status: "success", message: "Berhasil Login", accessToken: "..." }),
+          }).example({
+            status: 'success',
+            message: 'Berhasil Login',
+            accessToken: '...',
+          }),
         },
       },
       handler: loginUser,
     },
   },
   {
-    method: "POST",
-    path: "/api/auth/logout",
+    method: 'POST',
+    path: '/api/logout',
     options: {
-      auth: { strategy: "jwt", mode: "required" },
-      description: "Logout pengguna",
-      tags: ["api", "auth"],
+      auth: { strategy: 'jwt', mode: 'required' },
+      description: 'Logout pengguna',
+      tags: ['api', 'auth'],
       response: {
         status: {
           200: Joi.object({
-            status: Joi.string().valid("success").required(),
+            status: Joi.string().valid('success').required(),
             message: Joi.string().required(),
-          }).example({ status: "success", message: "Logout berhasil" }),
+          }).example({ status: 'success', message: 'Logout berhasil' }),
         },
       },
       handler: logoutUser,
     },
   },
   {
-    method: "GET",
-    path: "/api/auth/me",
+    method: 'GET',
+    path: '/api/profile',
     options: {
-      auth: { strategy: "jwt", mode: "required" },
-      description: "Dapatkan detail pengguna saat ini",
-      tags: ["api", "auth"],
+      auth: { strategy: 'jwt', mode: 'required' },
+      description: 'Dapatkan detail pengguna saat ini',
+      tags: ['api', 'auth'],
       response: {
         status: {
           200: Joi.object({
-            status: Joi.string().valid("success").required(),
+            status: Joi.string().valid('success').required(),
             user: Joi.object({
               _id: Joi.string().required(),
               name: Joi.string().required(),
@@ -102,7 +99,7 @@ export default [
               role: Joi.string().valid('user', 'moderator', 'admin').required(),
               isVerified: Joi.boolean().required(),
               createdAt: Joi.string().isoDate().allow(null).required(),
-              updatedAt: Joi.string().isoDate().allow(null).required()
+              updatedAt: Joi.string().isoDate().allow(null).required(),
             }).required(),
           }),
         },
@@ -111,39 +108,45 @@ export default [
     },
   },
   {
-    method: "PUT",
-    path: "/api/auth/profile",
+    method: 'PUT',
+    path: '/api/update-profile',
     options: {
-      auth: { strategy: "jwt", mode: "required" },
-      description: "Update profil pengguna...",
-      tags: ["api", "auth"],
+      auth: { strategy: 'jwt', mode: 'required' },
+      description: 'Update profil pengguna (termasuk nama, usia, tinggi, berat, foto profil)', // Deskripsi bisa diupdate
+      tags: ['api', 'auth'],
       payload: {
-        maxBytes: 5 * 1024 * 1024,
-        output: "stream", parse: true, multipart: { output: "stream" },
-        allow: ["application/json", "multipart/form-data"],
+        maxBytes: 5 * 1024 * 1024, // 5MB
+        output: 'stream',
+        parse: true,
+        multipart: { output: 'stream' },
+        allow: ['application/json', 'multipart/form-data'], // Izinkan kedua tipe konten
       },
       validate: {
         payload: Joi.object({
-            age: Joi.number().integer().min(0).allow(null, '').optional(),
-            height: Joi.number().min(0).allow(null, '').optional(),
-            weight: Joi.number().min(0).allow(null, '').optional(),
-            profilePicture: Joi.any().optional().allow(null, '').meta({ swaggerType: 'file' }),
-        }).unknown(true).options({ convert: true }),
+          name: Joi.string().trim().min(3).max(100).optional() // Tambahkan validasi untuk nama
+            .description('Nama pengguna baru (opsional, 3-100 karakter)'),
+          age: Joi.number().integer().min(0).allow(null, '').optional(),
+          height: Joi.number().min(0).allow(null, '').optional(),
+          weight: Joi.number().min(0).allow(null, '').optional(),
+          profilePicture: Joi.any().optional().allow(null, '').meta({ swaggerType: 'file' }),
+        })
+          .unknown(true) // Izinkan field lain jika menggunakan multipart/form-data
+          .options({ convert: true }), // Penting untuk konversi tipe data
         failAction: 'error',
       },
       response: {
         status: {
           200: Joi.object({
-            status: Joi.string().valid("success", "info").required(),
+            status: Joi.string().valid('success', 'info').required(),
             message: Joi.string().required(),
-            data: Joi.object({ 
-                userId: Joi.string().required(),
-                name: Joi.string().required(),
-                age: Joi.number().integer().min(0).allow(null).required(),
-                height: Joi.number().min(0).allow(null).required(),
-                weight: Joi.number().min(0).allow(null).required(),
-                updatedAt: Joi.string().isoDate().required()
-            }).optional() 
+            data: Joi.object({
+              userId: Joi.string().required(),
+              name: Joi.string().required(), // Skema respons sudah memiliki nama
+              age: Joi.number().integer().min(0).allow(null).required(),
+              height: Joi.number().min(0).allow(null).required(),
+              weight: Joi.number().min(0).allow(null).required(),
+              updatedAt: Joi.string().isoDate().required(),
+            }).optional(),
           }),
         },
       },
@@ -151,12 +154,12 @@ export default [
     },
   },
   {
-    method: "GET",
-    path: "/api/auth/profile-picture",
+    method: 'GET',
+    path: '/api/profile-picture',
     options: {
-      auth: { strategy: "jwt", mode: "required" },
-      description: "Dapatkan gambar profil pengguna...",
-      tags: ["api", "auth"],
+      auth: { strategy: 'jwt', mode: 'required' },
+      description: 'Dapatkan gambar profil pengguna...',
+      tags: ['api', 'auth'],
       handler: getProfilePicture,
     },
   },

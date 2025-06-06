@@ -3,7 +3,9 @@
 
 ## Auth Collection
 
-### POST /api/auth/register
+# Auth
+
+### POST /api/register
 
 - **Description**: Register a new user
 - **Auth Required**: No
@@ -44,7 +46,7 @@
 }
 ```
 
-### POST /api/auth/login
+### POST /api/login
 
 - **Description**: Login user
 - **Auth Required**: No
@@ -85,7 +87,7 @@
 }
 ```
 
-### POST /api/auth/logout
+### POST /api/logout
 
 - **Description**: Logout user
 - **Auth Required**: Yes
@@ -121,7 +123,7 @@
 }
 ```
 
-### GET /api/auth/me
+### GET /api/profile
 
 - **Description**: Get current user details
 - **Auth Required**: Yes
@@ -150,15 +152,16 @@
 ```
 
 
-### PUT /api/auth/profile
+### PUT /api/update-profile
 
 - **Description**: Update user profile
 - **Auth Required**: Yes
+- **Untuk menghapus gambar profil, kirim profilePicture dengan string kosong "" atau null**
 - **Request Body** (multipart/form-data):
 
 ```json
 {
-  "name": "rawr",
+  "name": "lumere", //optional
   "profilePicture": "file", // File gambar (JPEG atau PNG, max 5MB)
   "age": 30, // Opsional
   "height": 190, // Opsional
@@ -175,7 +178,7 @@
     "message": "Profile updated successfully", 
     "data": { 
         "userId": "6832cbdea23729284f3801b4",
-        "name": "John Doe", // Nama tidak bisa diubah melalui endpoint ini
+        "name": "John Doe", 
         "age": 30,
         "height": 175,
         "weight": 68,
@@ -199,12 +202,12 @@
 ```json
 {
   "status": "error",
-  "message": "Ukuran payload atau file terlalu besar dari yang diizinkan"
+  "message": "Ukuran file profil tidak boleh melebihi 5MB."
 }
 ```
 
 
-### GET /api/auth/profile-picture
+### GET /api/profile-picture
 
 - **Description**: Get user profile picture
 - **Auth Required**: Yes
@@ -224,6 +227,8 @@
   "message": "Gambar profil tidak ditemukan"
 }
 ```
+
+# Admin
 
 ### GET /api/admin/users
 
@@ -376,38 +381,341 @@
 }
 ```
 
-## Food Items Collection
+## Items Collection
 
-### Food Item Schema (Contoh Data Makanan/Minuman yang Disetujui)
+### Item Schema (Contoh Data Makanan/Minuman yang Disetujui)
 
 ```json
 {
     "id": "string (MongoDB ObjectId)",
-    "nama": "string",
-    "asal": "string (opsional)",
-    "kategori": "string",
-    "deskripsi": "string (opsional)",
-    "foto_url": "string (URL, opsional)",
-    "bahan": [
-        { "nama": "string", "jumlah": "string", "alias": "string (opsional)" }
+    "name": "string",
+    "nation": "string",
+    "catelogy": "string",
+    "description": "string ",
+    "image": "string (URL, opsional)",
+    "origin": "string",
+    "ingredients": [
+        { "ingredientAlias": "string", "ingredientName": "string", "ingredientDose": "number" }
     ],
-    "nutrisi_per_100g": {
+    "nutrisi_total": {
         // contoh field, bisa lebih banyak
-        "kalori": "number",
-        "lemak": "number",
-        "karbohidrat": "number",
+        "calories": "number",
+        "fat": "number",
+        "carbohydrate": "number",
+        "sugar": "number",
         "protein": "number",
-        "serat": "number",
-        "kolesterol": "number",
-        "natrium": "number",
-        "vitamin_C": "number"
+        "fiber": "number",
+        "cholesterol": "number",
+        "sodium": "number",
+        "water": "number"
         // ... struktur vitamin dan mineral jika didefinisikan detail
     },
     "disease_rate": [ 
-        { "penyakit": "string", "peringatan": "string", "catatan": "string" }
+        { "diease": "string", "status": "string", "level": "string" }
     ],
-    "createdAt": "string (ISO 8601 date)",
-    "updatedAt": "string (ISO 8601 date)"
+    "status" : "string",
+    "submittedBy" : "string",
+    "submittedAt": "string (ISO 8601 date)",
+    "riviewedBy" : "string",
+    "reviewedAt": "string (ISO 8601 date)",
+    "ispublic" : "boolean"
+}
+```
+
+### GET /api/items
+
+- **Description**: mengambil semua data makanan
+- **Auth Required**: NO
+- **Query Parameters**:
+
+  - `page`: (number, opsional, default: 1): Nomor halaman.
+  - `limit`: (number, opsional, default: 20, max:100): Jumlah item per halaman.
+  - `search`: (string, opsional): Kata kunci pencarian berdasarkan nama makanan.
+
+- **Request Body**: No
+
+- **Response**: 200
+
+```json 
+{
+"status": "success",
+    "message": "Daftar makanan dan minuman berhasil diambil.",
+    "data": [
+        {
+            "id": "683be26522863fa4384dc37d",
+            "name": "Ayam Betutu",
+            "nation": "Indonesia",
+            "category": "food",
+            "description": "Ayam Betutu is a traditional Balinese dish made from whole chicken marinated in rich local spices, wrapped in banana leaves, and slow-cooked by grilling or steaming until tender and flavorful.",
+            "image": "https://storage.googleapis.com/bucket-nutrify/ayam-betutu.jpg",
+            "createdAt": null,
+            "updatedAt": null
+        }
+        // ... more food items
+    ],
+      "pagination": {
+        "currentPage": 1,
+        "totalPages": 5,
+        "totalItems": 24,
+        "limit": 10
+      }
+}
+```
+
+### GET /api/items/{id}
+
+- **Description**: Get details of a specific approved food item by ID.
+- **Auth Required**: NO
+- **path Parameters**:
+
+  - `id`: (string, required): ID makanan atau minuman.
+
+- **Request Body**: No
+
+- **Response**: 200
+
+```json
+{
+    "status": "success",
+    "message": "Detail makanan atau minuman berhasil diambil.",
+    "data": {
+        "_id": "683be26522863fa4384dc371",
+        "name": "Rendang",
+        "nation": "Indonesia",
+        "image": "https://storage.googleapis.com/bucket-nutrify/rendang.jpg",
+        "category": "food",
+        "description": "Rendang is a rich and tender coconut beef stew which is explosively flavorful and famous throughout Indonesia. Simmered in coconut milk and spices until the liquid evaporates, this dish is intensely flavorful with complex layers of taste from the various spices used in its preparation.",
+        "origin": "Minangkabau, West Sumatra",
+        "ingredients": 
+            {
+                "ingredientAlias": "",
+                "ingredientName": "Lean beef",
+                "ingredientDose": "1000"
+            },
+              // ... more ingredients
+          "nutrition_total": {
+            "calories": 195,
+            "fat": 11.07,
+            "carbohydrate": 4.49,
+            "sugar": 1.31,
+            "protein": 19.68,
+            "fiber": 1.7,
+            "cholesterol": 29,
+            "sodium": 184,
+            "water": 9,
+            "vitamins": {
+                "vitamin_A": 0.2,
+                "vitamin_B1": 0.05,
+                "vitamin_B2": 0.1,
+                "vitamin_B3": 4.5,
+                "vitamin_B5": 0.9,
+                "vitamin_B6": 0.4,
+                "vitamin_B9": 10,
+                "vitamin_B12": 1.5,
+                "vitamin_C": 0,
+                "vitamin_D": 0,
+                "vitamin_E": 0.2,
+                "vitamin_K": 0
+            },
+            "minerals": {
+                "calcium": 474,
+                "iron": 14.9,
+                "magnesium": 25,
+                "phosphorus": 211,
+                "potassium": 373,
+                "zinc": 5.5
+            }
+        },
+        "disease_rate": [
+            {
+                "disease": "High Cholesterol",
+                "status": "CAUTION",
+                "level": "The high content of saturated fat and cholesterol can increase the risk of heart disease if consumed excessively."
+            },
+            {
+                "disease": "Hypertension",
+                "status": "Moderate Consumption",
+                "level": "The relatively high sodium content can contribute to high blood pressure if not controlled."
+            }
+        ],
+        "status": "approved",
+        "submittedBy": "N/A",
+        "submittedAt": "2025-05-23T00:19:20.501Z",
+        "reviewedBy": "N/A",
+        "reviewedAt": "2025-05-23T00:19:20.501Z",
+        "isPublic": true
+    }
+}
+```
+
+### POST /api/items
+
+- **Description**: Tambahkan data makanan/minuman baru. Jika diajukan oleh admin/moderator, status langsung 'approved'. Jika oleh user biasa, status 'pending' dan masuk ke moderation queue.
+- **Auth Required**: yes
+- **Request Body**: 
+
+```json 
+{
+  "name": "Ayam Bakar Madu Spesial",
+  "nation": "Indonesia",
+  "category": "food",
+  "description": "Ayam bakar dengan bumbu madu meresap, disajikan dengan sambal dan lalapan segar. Cocok untuk makan siang.",
+  "image": "https://example.com/ayam_bakar_madu.jpg",
+  "origin": "indo",
+  "ingredients": [
+    {
+      "ingredientName": "kaldu ayam",
+      "ingredientDose": "250"
+    },
+    {
+      "ingredientName": "wortel mentah",
+      "ingredientDose": "200"
+    },
+    {
+      "ingredientName": "nasi jagung",
+      "ingredientDose": "100"
+    }git
+  ]
+  // nutritionTotal dan diseaseRate akan diisi oleh server setelah prediksi ML
+}
+```
+
+- **Response**: 201
+
+```json 
+{
+  "status": "success",
+  "message": "item added successfully", // atau "item submitted for approval"
+  "data": {
+    "itemId": "string (MongoDB ObjectId)", // ID dari item yang baru dibuat atau pending item
+    "status": "approved", // atau "pending"
+    "submittedAt": "2024-01-16T10:30:00.000Z"
+  }
+}
+```
+
+### GET /api/pending-items
+
+- **Description**: mengambil daftar item yang menunggu persetujuan dengan paginasi. Responsnya dibuat lebih ringkas untuk tampilan daftar.
+- **Auth Required**: Yeah (JWT, role admin atau moderator)
+- **Query Parameters**:
+
+  - `page`: (number, opsional, default: 1): Nomor halaman yang ingin ditampilkan.
+  - `limit`: (number, opsional, default: 10): Jumlah item per halaman.
+
+- **Request Body**: No
+
+- **Response**: 200
+```json 
+{
+  "status": "success",
+  "message": "Daftar makanan pending berhasil diambil.",
+  "data": [
+    {
+      "pendingId": "6841e2f3a4b5c6d7e8f9a0b1",
+      "name": "Nasi Goreng Spesial (Menunggu Persetujuan)",
+      "category": "food",
+      "description": "Nasi goreng dengan bumbu rahasia dan topping spesial yang menunggu untuk disetujui.",
+      "image": "https://example.com/nasi-goreng-pending.jpg",
+      "origin": "Indonesia",
+      "submittedBy": "6841d1a2b3c4d5e6f7a8b9c0",
+      "submittedAt": "2025-06-05T18:30:00.123Z",
+      "status": "pending"
+    },
+    {
+      "pendingId": "6841e2f3a4b5c6d7e8f9a0b2",
+      "name": "Jus Alpukat Sehat (Menunggu Persetujuan)",
+      "category": "drink",
+      "description": "Jus alpukat segar tanpa gula yang menunggu untuk disetujui.",
+      "image": "https://example.com/jus-alpukat-pending.jpg",
+      "origin": "Indonesia",
+      "submittedBy": "6841d1a2b3c4d5e6f7a8b9c1",
+      "submittedAt": "2025-06-05T18:35:00.456Z",
+      "status": "pending"
+    }
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "totalPages": 5,
+    "totalItems": 50,
+    "limit": 10
+  }
+}
+```
+
+### GET /api/pending-items/{pendingId}
+
+- **Description**: mengambil detail lengkap dari satu item pending berdasarkan ID-nya.
+- **Auth Required**: Yeah (JWT, role admin atau moderator)
+- **Path Parameters**:
+
+  - `pendingId`: (string, wajib): ID unik dari item pending yang ingin dilihat detailnya.
+
+- **Request Body**: No
+
+- **Response**: 200
+```json 
+{
+  "status": "success",
+  "message": "Detail item makanan pending berhasil diambil.",
+  "data": {
+    "pendingId": "6841e2f3a4b5c6d7e8f9a0b1",
+    "name": "Nasi Goreng Spesial (Menunggu Persetujuan)",
+    "nation": "Indonesia",
+    "category": "food",
+    "description": "Nasi goreng dengan bumbu rahasia dan topping spesial yang menunggu untuk disetujui.",
+    "image": "https://example.com/nasi-goreng-pending.jpg",
+    "origin": "Indonesia",
+    "ingredients": [
+      {
+        "ingredientName": "Nasi Putih",
+        "ingredientDose": "200g",
+        "ingredientAlias": null
+      },
+      {
+        "ingredientName": "Telur Ayam",
+        "ingredientDose": "1 butir",
+        "ingredientAlias": ""
+      }
+    ],
+    "nutrition_total": {
+      "calories": 350,
+      "fat": 15.5,
+      "carbohydrate": 40.2,
+      "sugar": 5.1,
+      "protein": 12.8,
+      "fiber": 2.1,
+      "cholesterol": 186,
+      "sodium": 590,
+      "water": null,
+      "vitamins": {
+        "vitamin_A": 0.3,
+        "vitamin_B9": 20
+      },
+      "minerals": {
+        "calcium": 50,
+        "iron": 2.5
+      }
+    },
+    "disease_rate": [
+      {
+        "disease": "Hypertension",
+        "warning": "CAUTION",
+        "note": "Kandungan sodium yang tinggi dari kecap dan garam."
+      }
+    ],
+    "status": "pending",
+    "submittedBy": {
+      "userId": "6841d1a2b3c4d5e6f7a8b9c0",
+      "name": "User Biasa",
+      "email": "user@example.com"
+    },
+    "submittedAt": "2025-06-05T18:30:00.123Z",
+    "reviewNotes": null,
+    "reviewedBy": null,
+    "reviewedAt": null,
+    "pendingItemUpdatedAt": "2025-06-05T18:30:00.123Z"
+  }
 }
 ```
 

@@ -1,22 +1,22 @@
-import User from "../models/User.js";
-import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
-import Boom from "@hapi/boom";
+import User from '../models/user.js';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import Boom from '@hapi/boom';
 
 const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
-    expiresIn: "6d",
+    expiresIn: '6d',
   });
 };
 
 const setJwtCookie = (h, token) => {
-  return h.state("jwt", token, {
+  return h.state('jwt', token, {
     ttl: 6 * 24 * 60 * 60 * 1000,
     isSecure: process.env.NODE_ENV === 'production',
     isHttpOnly: true,
-    encoding: "none",
-    isSameSite: "Lax",
-    path: "/",
+    encoding: 'none',
+    isSameSite: 'Lax',
+    path: '/',
   });
 };
 
@@ -35,21 +35,22 @@ export const registerUser = async (request, h) => {
 
     const user = await User.create({ name, email, password, role });
     const token = generateToken(user._id.toString());
-    
-    const response = h.response({
-      status: "success",
-      message: "Registrasi berhasil" + (role === 'admin' ? ' sebagai admin.' : '.'),
-    }).code(201);
-    
+
+    const response = h
+      .response({
+        status: 'success',
+        message: `Registrasi berhasil${role === 'admin' ? ' sebagai admin.' : '.'}`,
+      })
+      .code(201);
+
     setJwtCookie(response, token);
     return response;
-
   } catch (err) {
     if (err.isBoom) {
-        throw err;
+      throw err;
     }
     if (err.code === 11000) {
-        throw Boom.conflict('Email yang Anda masukkan sudah terdaftar.');
+      throw Boom.conflict('Email yang Anda masukkan sudah terdaftar.');
     }
     console.error('Error registrasi:', err.message, err.stack);
     throw Boom.internal('Terjadi kesalahan pada server saat registrasi.');
@@ -60,21 +61,22 @@ export const loginUser = async (request, h) => {
   try {
     const { email, password } = request.payload;
 
-    const user = await User.findOne({ email }).select("+password");
+    const user = await User.findOne({ email }).select('+password');
     if (!user || !(await bcrypt.compare(password, user.password))) {
       throw Boom.unauthorized('Email atau password salah.');
     }
 
     const token = generateToken(user._id.toString());
-    const response = h.response({
-      status: "success",
-      message: "Berhasil Login",
-      accessToken: token
-    }).code(200);
-    
+    const response = h
+      .response({
+        status: 'success',
+        message: 'Berhasil Login',
+        accessToken: token,
+      })
+      .code(200);
+
     setJwtCookie(response, token);
     return response;
-
   } catch (err) {
     if (err.isBoom) throw err;
     console.error('Error login:', err.message, err.stack);
@@ -84,18 +86,19 @@ export const loginUser = async (request, h) => {
 
 export const logoutUser = (request, h) => {
   try {
-    const response = h.response({
-      status: "success",
-      message: "Logout berhasil"
-    }).code(200);
-    
-    response.unstate("jwt", {
-      path: "/",
+    const response = h
+      .response({
+        status: 'success',
+        message: 'Logout berhasil',
+      })
+      .code(200);
+
+    response.unstate('jwt', {
+      path: '/',
       isSecure: process.env.NODE_ENV === 'production',
-      isSameSite: "Lax",
+      isSameSite: 'Lax',
     });
     return response;
-
   } catch (err) {
     console.error('Error logout:', err.message, err.stack);
     throw Boom.internal('Terjadi kesalahan pada server saat logout.');
@@ -105,30 +108,31 @@ export const logoutUser = (request, h) => {
 export const currentUser = async (request, h) => {
   try {
     const userId = request.auth.credentials.id;
-    const user = await User.findById(userId).select("-password -__v");
-                                                                      
+    const user = await User.findById(userId).select('-password -__v');
+
     if (!user) {
-      throw Boom.notFound("Pengguna tidak ditemukan.");
+      throw Boom.notFound('Pengguna tidak ditemukan.');
     }
 
-    return h.response({
-      status: "success",
-      user: {
-        _id: user._id.toString(),
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        hasProfilePicture: !!user.profilePictureData,
-        profilePictureMimeType: user.profilePictureMimeType || null,
-        age: user.age || null,
-        height: user.height || null,
-        weight: user.weight || null,
-        isVerified: user.isVerified,
-        createdAt: user.createdAt ? user.createdAt.toISOString() : null,
-        updatedAt: user.updatedAt ? user.updatedAt.toISOString() : null
-      }
-    }).code(200);
-
+    return h
+      .response({
+        status: 'success',
+        user: {
+          _id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          hasProfilePicture: !!user.profilePictureData,
+          profilePictureMimeType: user.profilePictureMimeType || null,
+          age: user.age || null,
+          height: user.height || null,
+          weight: user.weight || null,
+          isVerified: user.isVerified,
+          createdAt: user.createdAt ? user.createdAt.toISOString() : null,
+          updatedAt: user.updatedAt ? user.updatedAt.toISOString() : null,
+        },
+      })
+      .code(200);
   } catch (err) {
     if (err.isBoom) throw err;
     console.error('Error mendapatkan current user:', err.message, err.stack);
@@ -139,9 +143,16 @@ export const currentUser = async (request, h) => {
 export const updateProfile = async (request, h) => {
   try {
     const userId = request.auth.credentials.id;
-    const { age, height, weight, profilePicture } = request.payload;
-    
+    // Ambil 'name' dari payload
+    const { name, age, height, weight, profilePicture } = request.payload;
+
     const updateData = {};
+
+    // Tambahkan nama ke updateData jika ada di payload
+    // Validasi (trim, min length) akan ditangani oleh Joi di definisi rute
+    if (name !== undefined) {
+      updateData.name = name;
+    }
 
     if (age !== undefined) updateData.age = age;
     if (height !== undefined) updateData.height = height;
@@ -152,23 +163,21 @@ export const updateProfile = async (request, h) => {
       const fileMimeType = profilePicture.hapi.headers['content-type'];
 
       if (!allowedTypes.includes(fileMimeType)) {
-        throw Boom.badData("Tipe file tidak valid. Hanya file JPEG dan PNG yang diizinkan.");
+        throw Boom.badData('Tipe file tidak valid. Hanya file JPEG dan PNG yang diizinkan.');
       }
 
       const maxFileSize = 5 * 1024 * 1024;
       const chunks = [];
+      let currentSize = 0;
       for await (const chunk of profilePicture) {
         chunks.push(chunk);
-        if (Buffer.concat(chunks).length > maxFileSize) {
-            profilePicture.destroy();
-            throw Boom.entityTooLarge("Ukuran file profil tidak boleh melebihi 5MB.");
+        currentSize += chunk.length;
+        if (currentSize > maxFileSize) {
+          profilePicture.destroy();
+          throw Boom.entityTooLarge('Ukuran file profil tidak boleh melebihi 5MB.');
         }
       }
       const buffer = Buffer.concat(chunks);
-      
-      if (buffer.length > maxFileSize) {
-        throw Boom.entityTooLarge("Ukuran file profil tidak boleh melebihi 5MB.");
-      }
 
       updateData.profilePictureData = buffer;
       updateData.profilePictureMimeType = fileMimeType;
@@ -178,49 +187,48 @@ export const updateProfile = async (request, h) => {
     }
 
     if (Object.keys(updateData).length === 0 && !(profilePicture === null || profilePicture === '')) {
-        const currentUserData = await User.findById(userId).select("name age height weight updatedAt");
-        if (!currentUserData) {
-            throw Boom.notFound("Pengguna tidak ditemukan.");
-        }
-        return h.response({
-            status: "success",
-            message: "Tidak ada data profil yang diubah.",
-            data: {
-                userId: currentUserData._id.toString(),
-                name: currentUserData.name,
-                age: currentUserData.age || null,
-                height: currentUserData.height || null,
-                weight: currentUserData.weight || null,
-                updatedAt: currentUserData.updatedAt.toISOString()
-            }
-        }).code(200);
+      const currentUserData = await User.findById(userId).select('name age height weight updatedAt');
+      if (!currentUserData) {
+        throw Boom.notFound('Pengguna tidak ditemukan.');
+      }
+      return h
+        .response({
+          status: 'success',
+          message: 'Tidak ada data profil yang diubah.',
+          data: {
+            userId: currentUserData._id.toString(),
+            name: currentUserData.name, // Menampilkan nama saat ini
+            age: currentUserData.age || null,
+            height: currentUserData.height || null,
+            weight: currentUserData.weight || null,
+            updatedAt: currentUserData.updatedAt.toISOString(),
+          },
+        })
+        .code(200);
     }
 
-    const updatedUser = await User.findByIdAndUpdate(userId, { $set: updateData }, { new: true })
-                                .select("name age height weight updatedAt");
+    const updatedUser = await User.findByIdAndUpdate(userId, { $set: updateData }, { new: true }).select('name age height weight updatedAt');
     if (!updatedUser) {
-        throw Boom.notFound("Pengguna tidak ditemukan untuk diupdate.");
+      throw Boom.notFound('Pengguna tidak ditemukan untuk diupdate.');
     }
 
-    return h.response({
-      status: "success",
-      message: "Profile updated successfully",
-      data: {
+    return h
+      .response({
+        status: 'success',
+        message: 'Profile updated successfully',
+        data: {
           userId: updatedUser._id.toString(),
-          name: updatedUser.name,
+          name: updatedUser.name, // Akan menampilkan nama yang baru jika diubah
           age: updatedUser.age,
           height: updatedUser.height,
           weight: updatedUser.weight,
-          updatedAt: updatedUser.updatedAt.toISOString()
-      }
-    }).code(200);
-
+          updatedAt: updatedUser.updatedAt.toISOString(),
+        },
+      })
+      .code(200);
   } catch (err) {
     if (err.isBoom) throw err;
     console.error('Error update profile:', err.message, err.stack);
-    if (err.output && err.output.statusCode === 413) {
-        throw Boom.entityTooLarge("Ukuran file profil tidak boleh melebihi 5MB.");
-    }
     throw Boom.internal('Terjadi kesalahan pada server saat memperbarui profil.');
   }
 };
@@ -228,16 +236,13 @@ export const updateProfile = async (request, h) => {
 export const getProfilePicture = async (request, h) => {
   try {
     const userId = request.auth.credentials.id;
-    const user = await User.findById(userId)
-      .select("profilePictureData profilePictureMimeType");
+    const user = await User.findById(userId).select('profilePictureData profilePictureMimeType');
 
     if (!user || !user.profilePictureData || !user.profilePictureMimeType) {
-      throw Boom.notFound("Gambar profil tidak ditemukan.");
+      throw Boom.notFound('Gambar profil tidak ditemukan.');
     }
 
-    return h.response(user.profilePictureData)
-      .type(user.profilePictureMimeType)
-      .header("Content-Length", user.profilePictureData.length.toString());
+    return h.response(user.profilePictureData).type(user.profilePictureMimeType).header('Content-Length', user.profilePictureData.length.toString());
   } catch (err) {
     if (err.isBoom) throw err;
     console.error('Error mengambil gambar profil:', err.message, err.stack);
