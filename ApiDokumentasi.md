@@ -1,416 +1,393 @@
-````markdown
-## Nutrify API Docs
+---
 
-## Auth Collection
+# Dokumentasi API Nutrify
 
-### POST /api/auth/register
+Dokumen ini menyediakan detail tentang semua endpoint API yang tersedia untuk backend aplikasi Nutrify.
 
-- **Description**: Register a new user
-- **Auth Required**: No
-- **Request Body**: Yes
+## Catatan Umum
 
-```json
-{
-  "name": "John Doe",
-  "email": "johndoe@gmail.com",
-  "password": "johndoe1234"
-}
-```
-````
+* **Autentikasi**: Sebagian besar endpoint memerlukan autentikasi menggunakan JWT (JSON Web Token). Token harus dikirim melalui cookie `jwt` (yang akan dibaca otomatis oleh server) atau sebagai `Bearer Token` di header `Authorization`.
+* **Role & Hak Akses**:
+    * `user`: Dapat mendaftar, login, mengelola profil sendiri, dan mengajukan data makanan baru (statusnya akan menjadi `pending`).
+    * `moderator`: Memiliki semua hak `user`, ditambah kemampuan untuk mengajukan makanan baru yang langsung disetujui (`approved`), serta meninjau (menyetujui/menolak) pengajuan dari pengguna lain.
+    * `admin`: Memiliki semua hak `moderator`, ditambah kemampuan untuk mengelola data pengguna (melihat semua pengguna, mengubah role, menghapus pengguna).
+* **Paginasi**: Endpoint yang mengembalikan daftar data (seperti `GET /api/items` atau `GET /api/users`) mendukung parameter query `page` dan `limit` untuk paginasi.
+* **Unggahan File**: Unggahan gambar profil dibatasi hingga **5 MB** dan harus dalam format `JPEG` atau `PNG`.
 
-- **Response**: 201
+---
 
-```json
-{
-  "status": "success",
-  "message": "Registrasi berhasil" // atau "Registrasi berhasil sebagai admin." jika user pertama
-}
-```
+## 1. Autentikasi & Profil
 
-- **Response**: 400
+Endpoint yang berhubungan dengan registrasi, login, dan manajemen profil pengguna.
 
-```json
-{
-  "status": "error",
-  "message": "Invalid request payload input"
-}
-```
+### **`POST /api/register`**
 
-- **Response**: 409
+* **Deskripsi**: Mendaftarkan pengguna baru. Pengguna pertama yang mendaftar secara otomatis akan mendapatkan role `admin`.
+* **Auth**: Tidak perlu.
+* **Request Body**:
+    ```json
+    {
+      "name": "John Doe",
+      "email": "johndoe@example.com",
+      "password": "password123"
+    }
+    ```
+* **Response Sukses (201)**:
+    ```json
+    {
+        "status": "success",
+        "message": "Registrasi berhasil" // atau "Registrasi berhasil sebagai admin."
+    }
+    ```
+* **Response Error**:
+    * `400 Bad Request`: Payload tidak valid.
+    * `409 Conflict`: Email sudah terdaftar.
 
-```json
-{
-  "status": "error",
-  "message": "Email yang Anda masukkan sudah terdaftar"
-}
-```
+### **`POST /api/login`**
 
-### POST /api/auth/login
+* **Deskripsi**: Login untuk mendapatkan `accessToken`.
+* **Auth**: Tidak perlu.
+* **Request Body**:
+    ```json
+    {
+      "email": "johndoe@example.com",
+      "password": "password123"
+    }
+    ```
+* **Response Sukses (200)**:
+    ```json
+    {
+      "status": "success",
+      "message": "Berhasil Login",
+      "accessToken": "your.jwt.token"
+    }
+    ```
+* **Response Error**:
+    * `401 Unauthorized`: Email atau password salah.
 
-- **Description**: Login user
-- **Auth Required**: No
-- **Request Body**: Yes
+### **`POST /api/logout`**
 
-```json
-{
-  "email": "johndoe@gmail.com",
-  "password": "johndoe1234"
-}
-```
+* **Deskripsi**: Logout pengguna dengan menghapus cookie JWT.
+* **Auth**: **Wajib** (JWT).
+* **Response Sukses (200)**:
+    ```json
+    {
+      "status": "success",
+      "message": "Logout berhasil"
+    }
+    ```
 
-- **Response**: 200
+### **`GET /api/google`**
 
-```json
-{
-  "status": "success",
-  "message": "Berhasil Login",
-  "accessToken": "your.jwt.token"
-}
-```
+* **Deskripsi**: Mengarahkan pengguna ke halaman autentikasi Google.
+* **Auth**: Tidak perlu.
+* **Response**: Redirect ke halaman login Google.
 
-- **Response**: 400
+### **`GET /api/google/callback`**
 
-```json
-{
-  "status": "error",
-  "message": "Invalid request payload input"
-}
-```
+* **Deskripsi**: Callback endpoint yang dipanggil Google setelah pengguna berhasil login. Server akan memproses kode otorisasi, membuat atau mengambil data pengguna, dan mengembalikan token JWT.
+* **Auth**: Tidak perlu.
+* **Response Sukses (200)**: Mengatur cookie `jwt` dan mengembalikan data pengguna.
 
-- **Response**: 401
+### **`GET /api/profile`**
 
-```json
-{
-  "status": "error",
-  "message": "Email atau password Salah"
-}
-```
-
-### POST /api/auth/logout
-
-- **Description**: Logout user
-- **Auth Required**: Yes
-- **Request Body**: None
-
-- **Response**: 200
-
-```json
-{
-  "status": "success",
-  "message": "Logout berhasil"
-}
-```
-
-## Users Collection
-
-### Schema
-
-```json
-{
-  "_id": "string (MongoDB ObjectId)",
-  "name": "string",
-  "email": "string (unique)",
-  "role": "string (enum: 'user', 'moderator', 'admin', default: 'user')",
-  "profilePictureData": "Buffer", // Data biner gambar (tidak dikembalikan di list/detail user)
-  "profilePictureMimeType": "string", // Tipe MIME (e.g., "image/png")
-  "age": "number (opsional)",
-  "height": "number (opsional)",
-  "weight": "number (opsional)",
-  "isVerified": "boolean (default: false)",
-  "createdAt": "string (ISO 8601 date)",
-  "updatedAt": "string (ISO 8601 date)"
-}
-```
-
-### GET /api/auth/me
-
-- **Description**: Get current user details
-- **Auth Required**: Yes
-- **Request Body**: None
-
-- **Response**: 200
-
-```json
-{
-  "status": "success",
-  "user": {
-    "_id": "6832cbdea23729284f3801b4",
-    "name": "John Doe",
-    "email": "johndoe@example.com",
-    "hasProfilePicture": true,
-    "profilePictureMimeType": "image/png", // atau null
-    "age": 30, // atau null
-    "height": 190, // atau null
-    "weight": 70, // atau null
-    "role": "user", // atau "admin", "moderator"
-    "isVerified": false,
-    "createdAt": "2024-01-15T08:00:00.000Z",
-    "updatedAt": "2024-01-15T08:30:00.000Z"
-  }
-}
-```
-
-### PUT /api/auth/profile
-
-- **Description**: Update user profile
-- **Auth Required**: Yes
-- **Request Body** (multipart/form-data):
-
-```json
-{
-  "name": "rawr",
-  "profilePicture": "file", // File gambar (JPEG atau PNG, max 5MB)
-  "age": 30, // Opsional
-  "height": 190, // Opsional
-  "weight": 70 // Opsional
-}
-```
-
-- **Response**: 200
-
-```json
-{
-  "status": "success",
-  "message": "Profile updated successfully",
-  "data": {
-    "userId": "6832cbdea23729284f3801b4",
-    "name": "John Doe", // Nama tidak bisa diubah melalui endpoint ini
-    "age": 30,
-    "height": 175,
-    "weight": 68,
-    "updatedAt": "2024-01-16T10:30:00.000Z"
-  }
-}
-```
-
-- **Response**: 422
-
-```json
-{
-  "status": "error",
-  "message": "Tipe file tidak valid. Hanya file JPEG dan PNG yang diizinkan"
-}
-```
-
-- **Response**: 413
-
-```json
-{
-  "status": "error",
-  "message": "Ukuran payload atau file terlalu besar dari yang diizinkan"
-}
-```
-
-### GET /api/auth/profile-picture
-
-- **Description**: Get user profile picture
-- **Auth Required**: Yes
-- **Request Body**: None
-
-- **Response**: 200
-
-  - **Content-Type**: `image/png`
-  - **Body**: Data biner gambar
-
-- **Response**: 404
-
-```json
-{
-  "status": "error",
-  "message": "Gambar profil tidak ditemukan"
-}
-```
-
-### GET /api/admin/users
-
-- **Description**: Get list of all users (Admin only).
-- **Auth Required**: Yes (JWT, Admin Role)
-- **Query Parameters**:
-
-  - `page`: (number, opsional, default: 1): Nomor halaman.
-  - `limit`: (number, opsional, default: 10, max: 100): Jumlah item per halaman.
-
-- **Request Body**: None
-
-- **Response**: 200
-
-```json
-{
-  "status": "success",
-  "data": {
-    "users": [
-      {
-        "userId": "user123",
+* **Deskripsi**: Mendapatkan detail profil dari pengguna yang sedang login.
+* **Auth**: **Wajib** (JWT).
+* **Response Sukses (200)**:
+    ```json
+    {
+      "status": "success",
+      "user": {
+        "_id": "6832cbdea23729284f3801b4",
         "name": "John Doe",
         "email": "johndoe@example.com",
         "role": "user",
+        "hasProfilePicture": true,
+        "profilePictureMimeType": "image/png",
+        "age": 30,
+        "height": 175,
+        "weight": 68,
         "isVerified": true,
-        "createdAt": "2024-01-15T08:00:00.000Z"
-      },
-      {
-        "userId": "user456",
-        "name": "Jane Admin",
-        "email": "janeadmin@example.com",
-        "role": "admin",
-        "isVerified": true,
-        "createdAt": "2024-01-14T10:00:00.000Z"
+        "createdAt": "2024-01-15T08:00:00.000Z",
+        "updatedAt": "2024-01-16T10:30:00.000Z"
       }
-      // ... more users
-    ],
-    "pagination": {
-      "currentPage": 1,
-      "totalPages": 3,
-      "totalItems": 25,
-      "limit": 10
     }
-  }
-}
-```
+    ```
 
-- **Response**: 403 (Contoh: diakses oleh non-admin)
+### **`PUT /api/profile`**
 
-```json
-{
-  "status": "fail",
-  "message": "Akses ditolak. Hanya admin yang dapat mengakses sumber daya ini."
-}
-```
+* **Deskripsi**: Memperbarui profil pengguna. Dapat mengirimkan data sebagai `multipart/form-data` untuk mengubah foto profil.
+* **Auth**: **Wajib** (JWT).
+* **Request Body** (`multipart/form-data`):
+    * `name` (string, opsional)
+    * `age` (number, opsional)
+    * `height` (number, opsional)
+    * `weight` (number, opsional)
+    * `profilePicture` (file, opsional): File gambar (`JPEG`/`PNG`, maks 5MB). Untuk menghapus gambar, kirim nilai kosong atau `null`.
+* **Response Sukses (200)**:
+    ```json
+    {
+        "status": "success",
+        "message": "Profile updated successfully",
+        "data": {
+            "userId": "6832cbdea23729284f3801b4",
+            "name": "John Doe Updated",
+            "age": 31,
+            "height": 175,
+            "weight": 68,
+            "updatedAt": "2024-01-17T11:00:00.000Z"
+        }
+    }
+    ```
+* **Response Error**:
+    * `413 Payload Too Large`: Ukuran file melebihi 5MB.
+    * `422 Unprocessable Entity`: Tipe file tidak valid.
 
-### PATCH /api/admin/users/{userIdToChange}/role
+### **`GET /api/profile-picture`**
 
-- **Description**: Get list of all users (Admin only).
-- **Auth Required**: Yes (JWT, Admin Role)
-- **Path Parameters**:
+* **Deskripsi**: Mendapatkan file gambar profil dari pengguna yang sedang login.
+* **Auth**: **Wajib** (JWT).
+* **Response Sukses (200)**: `Content-Type` akan berupa `image/jpeg` atau `image/png`, dan body respons adalah data biner dari gambar.
+* **Response Error**:
+    * `404 Not Found`: "Gambar profil tidak ditemukan".
 
-  - `userIdToChange`: (string, required): ID pengguna yang rolenya akan diubah.
+---
 
-- **Request Body**: Yes
+## 2. Manajemen Makanan & Minuman (Items)
 
-```json
-{
-  "newRole": "moderator" // atau "user", "admin"
-}
-```
+Endpoint untuk mengelola data makanan dan minuman yang sudah disetujui dan bersifat publik.
 
-- **Response**: 200
+### **`GET /api/items`**
 
-```json
-{
-  "status": "success",
-  "message": "Role pengguna [Nama Pengguna] berhasil diubah menjadi [newRole]." // atau "Pengguna sudah memiliki role '[newRole]'. Tidak ada perubahan."
-}
-```
+* **Deskripsi**: Mendapatkan daftar semua makanan/minuman publik dengan paginasi dan pencarian.
+* **Auth**: Tidak perlu.
+* **Query Parameters**:
+    * `search` (string, opsional): Kata kunci untuk mencari berdasarkan nama.
+    * `page` (number, opsional, default: 1).
+    * `limit` (number, opsional, default: 20).
+* **Response Sukses (200)**:
+    ```json
+    {
+      "status": "success",
+      "message": "Daftar makanan dan minuman berhasil diambil.",
+      "data": [
+        {
+          "id": "683be26522863fa4384dc37d",
+          "name": "Ayam Betutu",
+          "nation": "Indonesia",
+          "origin": "Bali",
+          "category": "food",
+          "image": "https://storage.googleapis.com/bucket-nutrify/ayam-betutu.jpg",
+          "description": "Ayam Betutu is a traditional Balinese dish..."
+        }
+      ],
+      "pagination": { "currentPage": 1, "totalPages": 5, "totalItems": 98, "limit": 20 }
+    }
+    ```
 
-- **Response**: 400 (Contoh: role tidak valid, mencoba mengubah role diri sendiri)
+### **`GET /api/items/{name}`**
 
-```json
-{
-  "status": "fail",
-  "message": "Role target tidak valid. Pilih dari: user, moderator, admin" // atau "Admin tidak dapat mengubah role dirinya sendiri melalui endpoint ini."
-}
-```
+* **Deskripsi**: Mendapatkan detail spesifik dari sebuah item berdasarkan namanya. Pencarian nama bersifat *case-insensitive* dan harus sama persis.
+* **Auth**: Tidak perlu.
+* **Path Parameters**:
+    * `name` (string, wajib): Nama item yang URL-encoded.
+* **Response Sukses (200)**: Mengembalikan objek detail item, termasuk informasi nutrisi dan risiko penyakit.
+* **Response Error**:
+    * `404 Not Found`: "Makanan atau minuman tidak ditemukan.".
 
-- **Response**: 403 (Contoh: mencoba menurunkan role admin lain)
+### **`GET /api/items/id/{id}`**
 
-```json
-{
-  "status": "fail",
-  "message": "Admin tidak dapat menurunkan role admin lain melalui endpoint ini."
-}
-```
+* **Deskripsi**: Mendapatkan detail spesifik dari sebuah item berdasarkan ID unik MongoDB.
+* **Auth**: Tidak perlu.
+* **Path Parameters**:
+    * `id` (string, wajib): ID unik item.
+* **Response Sukses (200)**: Sama seperti `GET /api/items/{name}`.
+* **Response Error**:
+    * `404 Not Found`: "Makanan atau minuman tidak ditemukan.".
 
-- **Response**: 404 (Contoh: user tidak ditemukan)
+### **`POST /api/items`**
 
-```json
-{
-  "status": "fail",
-  "message": "Pengguna yang akan diubah rolenya tidak ditemukan."
-}
-```
+* **Deskripsi**: Mengajukan data makanan/minuman baru.
+    * Jika diajukan oleh `admin` atau `moderator`, item akan langsung disetujui (`approved`).
+    * Jika diajukan oleh `user`, item akan masuk ke antrian moderasi (`pending`).
+* **Auth**: **Wajib** (JWT).
+* **Request Body**:
+    ```json
+    {
+      "name": "Sate Ayam Madura",
+      "nation": "Indonesia",
+      "category": "food",
+      "description": "Sate ayam dengan bumbu kacang khas Madura.",
+      "image": "https://example.com/sate.jpg",
+      "origin": "Madura",
+      "ingredients": [
+        { "ingredientName": "Dada Ayam", "ingredientDose": "250" },
+        { "ingredientName": "Kacang Tanah", "ingredientDose": "100" }
+      ]
+    }
+    ```
+* **Response Sukses (201)**:
+    ```json
+    {
+      "status": "success",
+      // message: "item added successfully" (untuk admin/moderator)
+      "message": "item submitted for approval", // (untuk user)
+      "data": {
+        "itemId": "6843a2b1c...", // ID dari item baru atau item pending
+        "status": "approved", // atau "pending"
+        "submittedAt": "2024-01-18T12:00:00.000Z"
+      }
+    }
+    ```
+* **Response Error**:
+    * `409 Conflict`: "Data makanan dengan name ini mungkin sudah ada atau sedang diajukan.".
 
-### DELETE /api/admin/users/{userIdToDelete}
+---
 
-- **Description**: Delete a user account (Admin only). Admin tidak bisa menghapus akun admin lain atau akunnya sendiri melalui endpoint ini.
-- **Auth Required**: Yes (JWT, Admin Role)
-- **Path Parameters**:
+## 3. Moderasi (Admin & Moderator)**
 
-  - `userIdToDelete`: (string, required): ID pengguna yang akan dihapus.
+Endpoint khusus untuk `admin` dan `moderator` untuk mengelola item yang menunggu persetujuan.
 
-- **Request Body**: No
+### **`GET /api/pending-items`**
 
-- **Response**: 200
+* **Deskripsi**: Mendapatkan daftar item yang berstatus `pending` dengan paginasi.
+* **Auth**: **Wajib** (JWT, Role: `admin` atau `moderator`).
+* **Query Parameters**: `page` (opsional, default: 1), `limit` (opsional, default: 10).
+* **Response Sukses (200)**: Mengembalikan daftar ringkas item yang menunggu persetujuan.
 
-```json
-{
-  "status": "success",
-  "message": "Pengguna [Nama Pengguna] berhasil dihapus."
-}
-```
+### **`GET /api/pending-items/{pendingId}`**
 
-- **Response**: 400 (Contoh: mencoba menghapus diri sendiri)
+* **Deskripsi**: Mendapatkan detail lengkap dari satu item yang `pending` berdasarkan ID-nya.
+* **Auth**: **Wajib** (JWT, Role: `admin` atau `moderator`).
+* **Path Parameters**: `pendingId` (string, wajib).
+* **Response Sukses (200)**: Mengembalikan detail lengkap item, termasuk data `submittedBy`.
 
-```json
-{
-  "status": "fail",
-  "message": "Admin tidak dapat menghapus akunnya sendiri melalui endpoint ini."
-}
-```
+### **`PATCH /api/pending-items/{pendingId}/approve`**
 
-- **Response**: 403 (Contoh: mencoba menghapus admin lain)
+* **Deskripsi**: Menyetujui sebuah item yang `pending`. Item tersebut akan dihapus dari koleksi `PendingItems` dan dibuat di koleksi `Items`.
+* **Auth**: **Wajib** (JWT, Role: `admin` atau `moderator`).
+* **Path Parameters**: `pendingId` (string, wajib).
+* **Response Sukses (200)**:
+    ```json
+    {
+        "status": "success",
+        "message": "Makanan 'Nama Makanan' berhasil disetujui dan ditambahkan.",
+        "data": {
+            "itemId": "6842a9f6e32936dc053c08ed",
+            "name": "Nama Makanan",
+            "status": "approved"
+        }
+    }
+    ```
+* **Response Error**:
+    * `400 Bad Request`: "Item ini sudah di-\[status], tidak bisa disetujui lagi.".
+    * `409 Conflict`: Terjadi jika nama item yang disetujui sudah ada di koleksi utama. Pengajuan akan otomatis ditolak.
 
-```json
-{
-  "status": "fail",
-  "message": "Admin tidak diizinkan menghapus akun admin lain."
-}
-```
+### **`PATCH /api/pending-items/{pendingId}/reject`**
 
-- **Response**: 404 (Contoh: user tidak ditemukan)
+* **Deskripsi**: Menolak sebuah item yang `pending`. Status item akan diubah menjadi `rejected`.
+* **Auth**: **Wajib** (JWT, Role: `admin` atau `moderator`).
+* **Path Parameters**: `pendingId` (string, wajib).
+* **Request Body** (opsional):
+    ```json
+    {
+      "rejectionReason": "Gambar tidak jelas atau bahan tidak lengkap."
+    }
+    ```
+* **Response Sukses (200)**:
+    ```json
+    {
+        "status": "success",
+        "message": "Pengajuan makanan 'Nama Makanan' berhasil ditolak.",
+        "data": {
+            "pendingId": "6842ad47a37594839416c827",
+            "name": "Nama Makanan",
+            "status": "rejected",
+            "rejectionReason": "Gambar tidak jelas atau bahan tidak lengkap."
+        }
+    }
+    ```
 
-```json
-{
-  "status": "fail",
-  "message": "Pengguna yang akan dihapus tidak ditemukan."
-}
-```
+---
 
-## Food Items Collection
+## 4. Administrasi Pengguna (Admin Only)
 
-### Food Item Schema (Contoh Data Makanan/Minuman yang Disetujui)
+Endpoint khusus untuk `admin` mengelola semua pengguna di sistem.
 
-```json
-{
-  "id": "string (MongoDB ObjectId)",
-  "nama": "string",
-  "asal": "string (opsional)",
-  "kategori": "string",
-  "deskripsi": "string (opsional)",
-  "foto_url": "string (URL, opsional)",
-  "bahan": [
-    { "nama": "string", "jumlah": "string", "alias": "string (opsional)" }
-  ],
-  "nutrisi_per_100g": {
-    // contoh field, bisa lebih banyak
-    "kalori": "number",
-    "lemak": "number",
-    "karbohidrat": "number",
-    "protein": "number",
-    "serat": "number",
-    "kolesterol": "number",
-    "natrium": "number",
-    "vitamin_C": "number"
-    // ... struktur vitamin dan mineral jika didefinisikan detail
-  },
-  "diseaseRate": [
-    { "penyakit": "string", "peringatan": "string", "catatan": "string" }
-  ],
-  "createdAt": "string (ISO 8601 date)",
-  "updatedAt": "string (ISO 8601 date)"
-}
-```
+### **`GET /api/users`**
 
-## Catatan
+* **Deskripsi**: Mendapatkan daftar semua pengguna terdaftar dengan paginasi.
+* **Auth**: **Wajib** (JWT, Role: `admin`).
+* **Query Parameters**: `page` (opsional, default: 1), `limit` (opsional, default: 10).
+* **Response Sukses (200)**: Mengembalikan daftar pengguna beserta data paginasi.
+* **Response Error**:
+    * `403 Forbidden`: "Akses ditolak. Hanya admin yang dapat mengakses sumber daya ini.".
 
-- **Autentikasi**: Semua titik akhir yang memerlukan autentikasi menggunakan JWT. Token dikirim via cookie jwt (dibaca otomatis oleh server) atau header Authorization: Bearer {token}.
-- **Unggahan Berkas**: Unggahan gambar profil dibatasi hingga 5 MB dan harus dalam format JPEG atau PNG.
-- **Role** : - `user`: Bisa mengajukan makanan baru (status pending), mengelola profil sendiri. - `moderator`: Bisa mengajukan makanan baru (langsung approved), me-review (approve/reject) makanan pending. - `admin`: Semua hak moderator, ditambah mengelola pengguna (get all, change role, delete user).
+### **`PATCH /api/users/{userIdToChange}/role`**
+
+* **Deskripsi**: Mengubah role (`user`, `moderator`, `admin`) dari seorang pengguna.
+* **Auth**: **Wajib** (JWT, Role: `admin`).
+* **Path Parameters**: `userIdToChange` (string, wajib).
+* **Request Body**:
+    ```json
+    {
+      "newRole": "moderator"
+    }
+    ```
+* **Response Sukses (200)**:
+    ```json
+    {
+      "status": "success",
+      "message": "Role pengguna John Doe berhasil diubah menjadi moderator."
+    }
+    ```
+* **Response Error**:
+    * `400 Bad Request`: "Admin tidak dapat mengubah role dirinya sendiri.".
+    * `403 Forbidden`: "Admin tidak dapat menurunkan role admin lain.".
+    * `404 Not Found`: Pengguna tidak ditemukan.
+
+### **`DELETE /api/users/{userIdToDelete}`**
+
+* **Deskripsi**: Menghapus akun pengguna. Admin tidak bisa menghapus akunnya sendiri atau akun admin lain.
+* **Auth**: **Wajib** (JWT, Role: `admin`).
+* **Path Parameters**: `userIdToDelete` (string, wajib).
+* **Response Sukses (200)**:
+    ```json
+    {
+      "status": "success",
+      "message": "Pengguna Jane Doe berhasil dihapus."
+    }
+    ```
+* **Response Error**:
+    * `400 Bad Request`: "Admin tidak dapat menghapus akunnya sendiri.".
+    * `403 Forbidden`: "Admin tidak diizinkan menghapus akun admin lain.".
+    * `404 Not Found`: Pengguna tidak ditemukan.
+
+---
+
+## 5. Utilitas & Layanan Eksternal
+
+Endpoint pendukung dan untuk interaksi dengan layanan Machine Learning.
+
+### **`GET /api/display-ingredients`**
+
+* **Deskripsi**: Mendapatkan daftar 50 bahan makanan dengan fungsionalitas pencarian. Berguna untuk form input.
+* **Auth**: Tidak perlu.
+* **Query Parameters**:
+    * `search` (string, opsional): Kata kunci untuk mencari bahan.
+* **Response Sukses (200)**: Mengembalikan daftar bahan.
+
+### **`POST /predict`**
+
+* **Deskripsi**: Endpoint internal atau untuk testing, yang berinteraksi langsung dengan API Machine Learning untuk mendapatkan prediksi nutrisi dan risiko penyakit. Fungsi ini sudah terintegrasi dalam alur `POST /api/items`.
+* **Auth**: Tidak perlu.
+* **Request Body**:
+    ```json
+    {
+        "ingredients": [
+            { "name": "kaldu ayam", "dose": 250 },
+            { "name": "wortel mentah", "dose": 200 }
+        ]
+    }
+    ```
+* **Response Sukses (200)**: Mengembalikan hasil prediksi dari model ML.
