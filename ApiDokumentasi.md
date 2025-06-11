@@ -1,5 +1,3 @@
----
-
 # Dokumentasi API Nutrify
 
 Dokumen ini menyediakan detail tentang semua endpoint API yang tersedia untuk backend aplikasi Nutrify.
@@ -13,8 +11,6 @@ Dokumen ini menyediakan detail tentang semua endpoint API yang tersedia untuk ba
     * `admin`: Memiliki semua hak `moderator`, ditambah kemampuan untuk mengelola data pengguna (melihat semua pengguna, mengubah role, menghapus pengguna).
 * **Paginasi**: Endpoint yang mengembalikan daftar data (seperti `GET /api/items` atau `GET /api/users`) mendukung parameter query `page` dan `limit` untuk paginasi.
 * **Unggahan File**: Unggahan gambar profil dibatasi hingga **5 MB** dan harus dalam format `JPEG` atau `PNG`.
-
----
 
 ## 1. Autentikasi & Profil
 
@@ -36,7 +32,7 @@ Endpoint yang berhubungan dengan registrasi, login, dan manajemen profil penggun
     ```json
     {
         "status": "success",
-        "message": "Registrasi berhasil" // atau "Registrasi berhasil sebagai admin."
+        "message": "Registrasi berhasil" 
     }
     ```
 * **Response Error**:
@@ -151,8 +147,6 @@ Endpoint yang berhubungan dengan registrasi, login, dan manajemen profil penggun
 * **Response Error**:
     * `404 Not Found`: "Gambar profil tidak ditemukan".
 
----
-
 ## 2. Manajemen Makanan & Minuman (Items)
 
 Endpoint untuk mengelola data makanan dan minuman yang sudah disetujui dan bersifat publik.
@@ -177,7 +171,7 @@ Endpoint untuk mengelola data makanan dan minuman yang sudah disetujui dan bersi
           "nation": "Indonesia",
           "origin": "Bali",
           "category": "food",
-          "image": "https://storage.googleapis.com/bucket-nutrify/ayam-betutu.jpg",
+          "image": "[https://storage.googleapis.com/bucket-nutrify/ayam-betutu.jpg](https://storage.googleapis.com/bucket-nutrify/ayam-betutu.jpg)",
           "description": "Ayam Betutu is a traditional Balinese dish..."
         }
       ],
@@ -218,7 +212,7 @@ Endpoint untuk mengelola data makanan dan minuman yang sudah disetujui dan bersi
       "nation": "Indonesia",
       "category": "food",
       "description": "Sate ayam dengan bumbu kacang khas Madura.",
-      "image": "https://example.com/sate.jpg",
+      "image": "[https://example.com/sate.jpg](https://example.com/sate.jpg)",
       "origin": "Madura",
       "ingredients": [
         { "ingredientName": "Dada Ayam", "ingredientDose": "250" },
@@ -230,11 +224,10 @@ Endpoint untuk mengelola data makanan dan minuman yang sudah disetujui dan bersi
     ```json
     {
       "status": "success",
-      // message: "item added successfully" (untuk admin/moderator)
-      "message": "item submitted for approval", // (untuk user)
+      "message": "item submitted for approval", 
       "data": {
-        "itemId": "6843a2b1c...", // ID dari item baru atau item pending
-        "status": "approved", // atau "pending"
+        "itemId": "6843a2b1c...", 
+        "status": "approved", 
         "submittedAt": "2024-01-18T12:00:00.000Z"
       }
     }
@@ -242,9 +235,7 @@ Endpoint untuk mengelola data makanan dan minuman yang sudah disetujui dan bersi
 * **Response Error**:
     * `409 Conflict`: "Data makanan dengan name ini mungkin sudah ada atau sedang diajukan.".
 
----
-
-## 3. Moderasi (Admin & Moderator)**
+## 3. Moderasi (Admin & Moderator)
 
 Endpoint khusus untuk `admin` dan `moderator` untuk mengelola item yang menunggu persetujuan.
 
@@ -308,8 +299,6 @@ Endpoint khusus untuk `admin` dan `moderator` untuk mengelola item yang menunggu
     }
     ```
 
----
-
 ## 4. Administrasi Pengguna (Admin Only)
 
 Endpoint khusus untuk `admin` mengelola semua pengguna di sistem.
@@ -321,7 +310,7 @@ Endpoint khusus untuk `admin` mengelola semua pengguna di sistem.
 * **Query Parameters**: `page` (opsional, default: 1), `limit` (opsional, default: 10).
 * **Response Sukses (200)**: Mengembalikan daftar pengguna beserta data paginasi.
 * **Response Error**:
-    * `403 Forbidden`: "Akses ditolak. Hanya admin yang dapat mengakses sumber daya ini.".
+    * `403 Forbidden`: "Akes ditolak. Hanya admin yang dapat mengakses sumber daya ini.".
 
 ### **`PATCH /api/users/{userIdToChange}/role`**
 
@@ -362,8 +351,6 @@ Endpoint khusus untuk `admin` mengelola semua pengguna di sistem.
     * `400 Bad Request`: "Admin tidak dapat menghapus akunnya sendiri.".
     * `403 Forbidden`: "Admin tidak diizinkan menghapus akun admin lain.".
     * `404 Not Found`: Pengguna tidak ditemukan.
-
----
 
 ## 5. Utilitas & Layanan Eksternal
 
