@@ -1,6 +1,5 @@
 runtime: nodejs22
 env: standard
-
 entrypoint: node src/server.js
 
 handlers:

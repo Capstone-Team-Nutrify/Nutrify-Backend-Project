@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { getAllUsers, changeUserRole, deleteUserByAdmin } from '../controllers/adminControllers.js';
+import { getAllUsers, changeUserRole, deleteUserByAdmin, getUserById } from '../controllers/adminControllers.js';
 
 export default [
   {
@@ -43,6 +43,45 @@ export default [
         },
       },
       handler: getAllUsers,
+    },
+  },
+  {
+    method: 'GET',
+    path: '/api/users/{id}',
+    options: {
+      auth: {
+        strategy: 'jwt',
+        mode: 'required',
+      },
+      description: 'Get user details by ID (Admin only)',
+      tags: ['api', 'admin', 'users'],
+      validate: {
+        params: Joi.object({
+          id: Joi.string().hex().length(24).required().description('ID unik pengguna'),
+        }),
+      },
+      response: {
+              status: {
+                200: Joi.object({
+                  status: Joi.string().valid('success').required(),
+                  user: Joi.object({
+                    _id: Joi.string().required(),
+                    name: Joi.string().required(),
+                    email: Joi.string().email().required(),
+                    hasProfilePicture: Joi.boolean().required(),
+                    profilePictureMimeType: Joi.string().allow(null).optional(),
+                    age: Joi.number().integer().min(0).allow(null).optional(),
+                    height: Joi.number().min(0).allow(null).optional(),
+                    weight: Joi.number().min(0).allow(null).optional(),
+                    role: Joi.string().valid('user', 'moderator', 'admin').required(),
+                    isVerified: Joi.boolean().required(),
+                    createdAt: Joi.string().isoDate().allow(null).required(),
+                    updatedAt: Joi.string().isoDate().allow(null).required(),
+                  }).required(),
+          }),
+        },
+      },
+      handler: getUserById,
     },
   },
   {

@@ -60,7 +60,7 @@ const PendingItemSchemaJoi = Joi.object({
   description: Joi.string().allow('', null).optional(),
   image: Joi.string().uri().allow('', null).optional(),
   origin: Joi.string().allow('', null).optional(),
-  submittedBy: Joi.string().hex().length(24).allow(null).optional().description('ID Pengguna yang mengajukan'), 
+  submittedBy: Joi.string().allow(null).optional().description('Nama pengguna yang mengajukan'), 
   submittedAt: Joi.string().isoDate().allow(null).required(),
   status: Joi.string().valid('pending', 'approved', 'rejected').optional(),
 }).unknown(true);
@@ -203,6 +203,7 @@ export default [
               pendingId: Joi.string().required(),
               name: Joi.string().required(),
               status: Joi.string().valid('rejected').required(),
+              rejectionReason: Joi.string().required(),
             }).required(),
           }),
         },

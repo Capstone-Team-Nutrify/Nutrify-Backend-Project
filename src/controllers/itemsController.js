@@ -17,27 +17,25 @@ export const getAllItems = async (request, h) => {
       query = { name: { $regex: searchQuery, $options: 'i' } };
     }
 
-    const ItemsQuery = Item.find(query)
+    const itemsQuery = Item.find(query)
       .sort({ name: 1 })
       .skip(skip)
-      .limit(limit)
-      .populate('submittedBy', 'name');
+      .limit(limit);
 
     const totalItemsQuery = Item.countDocuments(query);
 
-    const [Items, totalItems] = await Promise.all([ItemsQuery.exec(), totalItemsQuery.exec()]);
+    const [items, totalItems] = await Promise.all([itemsQuery.exec(), totalItemsQuery.exec()]);
 
     const totalPages = Math.ceil(totalItems / limit);
-
-    const formattedItems = Items.map((item) => ({
+    
+    const formattedItems = items.map((item) => ({
       id: item._id.toString(),
       name: item.name,
       nation: item.nation,
+      origin: item.origin,
       category: item.category,
-      description: item.description,
       image: item.image,
-      submittedBy: item.submittedBy ? (typeof item.submittedBy === 'object' ? item.submittedBy.name : item.submittedBy) : 'N/A',
-      submittedAt: item.submittedAt ? item.submittedAt.toISOString() : null,  
+      description: item.description,
     }));
 
     return h
@@ -59,6 +57,26 @@ export const getAllItems = async (request, h) => {
   }
 };
 
+const formatItemDetails = (item) => ({
+  _id: item._id.toString(),
+  name: item.name,
+  nation: item.nation,
+  image: item.image,
+  category: item.category,
+  description: item.description,
+  origin: item.origin,
+  ingredients: item.ingredients,
+  nutrition_total: item.nutrition_total,
+  disease_rate: item.disease_rate,
+  status: 'approved', // Item di koleksi ini selalu 'approved'
+  submittedBy: item.submittedBy ? (typeof item.submittedBy === 'object' ? item.submittedBy.name : item.submittedBy) : 'N/A',
+  submittedAt: item.submittedAt ? item.submittedAt.toISOString() : null,
+  reviewedBy: item.reviewedBy ? (typeof item.reviewedBy === 'object' ? item.reviewedBy.name : item.reviewedBy) : 'N/A',
+  reviewedAt: item.reviewedAt ? item.reviewedAt.toISOString() : null,
+  isPublic: item.isPublic,
+});
+
+
 export const getItemById = async (request, h) => {
   try {
     const { id } = request.params;
@@ -75,40 +93,43 @@ export const getItemById = async (request, h) => {
       throw Boom.notFound('Makanan atau minuman tidak ditemukan.');
     }
 
+    const formattedItem = formatItemDetails(item); 
 
-    const formattedItem = {
-      _id: item._id.toString(),
-      name: item.name,
-      nation: item.nation,
-      image: item.image,
-      category: item.category,
-      description: item.description,
-      origin: item.origin,
-      ingredients: item.ingredients,
-      nutrition_total: item.nutrition_total, 
-      disease_rate: item.disease_rate,
-      status: 'approved',
-      // Penanganan untuk submittedBy dan reviewedBy yang mungkin string dari dataset atau objek dari populate
-      submittedBy: item.submittedBy ? (typeof item.submittedBy === 'object' ? item.submittedBy.name : item.submittedBy) : 'N/A',
-      submittedAt: item.submittedAt ? item.submittedAt.toISOString() : null,
-      reviewedBy: item.reviewedBy ? (typeof item.reviewedBy === 'object' ? item.reviewedBy.name : item.reviewedBy) : 'N/A',
-      reviewedAt: item.reviewedAt ? item.reviewedAt.toISOString() : null,
-      isPublic: item.isPublic,
+    return h.response({
+      status: 'success',
+      message: 'Detail makanan atau minuman berhasil diambil.',
+      data: formattedItem,
+    }).code(200);
 
-    };
-
-    return h
-      .response({
-        status: 'success',
-        message: 'Detail makanan atau minuman berhasil diambil.',
-        data: formattedItem,
-      })
-      .code(200);
   } catch (err) {
-    if (err.isBoom) {
-      throw err;
-    }
+    if (err.isBoom) throw err;
     console.error('Error getting item by ID:', err.message, err.stack);
+    throw Boom.internal('Terjadi kesalahan pada server saat mengambil data.');
+  }
+};
+
+export const getItemByName = async (request, h) => {
+  try {
+    const name = decodeURIComponent(request.params.name);
+
+    const item = await Item.findOne({ name: { $regex: new RegExp('^' + name + '$', "i") } })
+      .populate('submittedBy', 'name')
+      .populate('reviewedBy', 'name');
+
+    if (!item) {
+      throw Boom.notFound('Makanan atau minuman tidak ditemukan.');
+    }
+
+    const formattedItem = formatItemDetails(item); 
+
+    return h.response({
+      status: 'success',
+      message: 'Detail makanan atau minuman berhasil diambil.',
+      data: formattedItem,
+    }).code(200);
+  } catch (err) {
+    if (err.isBoom) throw err;
+    console.error('Error getting item by name:', err.message, err.stack);
     throw Boom.internal('Terjadi kesalahan pada server saat mengambil data.');
   }
 };
@@ -195,5 +216,74 @@ const itemData = {
     }
     console.error('Error creating item:', err.message, err.stack);
     throw Boom.internal('Terjadi kesalahan pada server saat menambahkan data makanan.');
+  }
+};
+
+export const updateItem = async (request, h) => {
+  try {
+    const { id } = request.params;
+    const userRole = request.auth.credentials.role;
+    const payload = request.payload;
+
+    if (userRole !== 'admin' && userRole !== 'moderator') {
+      throw Boom.forbidden('Akses ditolak. Hanya admin atau moderator yang dapat mengedit item.');
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw Boom.badRequest('Format ID item tidak valid.');
+    }
+    const itemToUpdate = await Item.findById(id);
+    if (!itemToUpdate) {
+      throw Boom.notFound('Item yang akan diupdate tidak ditemukan.');
+    }
+    
+    if (payload.name && payload.name !== itemToUpdate.name) {
+        const existingItem = await Item.findOne({ name: payload.name, _id: { $ne: id } });
+        if (existingItem) {
+            throw Boom.conflict(`Item dengan nama '${payload.name}' sudah ada.`);
+        }
+    }
+
+    const updateData = { ...payload };
+
+    if (payload.ingredients && payload.ingredients.length > 0) {
+      console.log('Bahan diupdate, menghitung ulang nutrisi...');
+      const ingredientsForML = payload.ingredients.map(ing => ({
+        name: ing.ingredientName,
+        dose: parseFloat(ing.ingredientDose) || 0,
+      }));
+
+      const prediction = await getPredictionFromML(ingredientsForML);
+      if (prediction && prediction.predict) {
+        updateData.nutrition_total = prediction.predict.total_nutrition;
+        updateData.disease_rate = prediction.predict.disease_rate;
+        console.log('Kalkulasi nutrisi baru berhasil.');
+      } else {
+          throw Boom.serverUnavailable('Gagal menghitung ulang data nutrisi dari layanan eksternal.');
+      }
+    }
+
+    const updatedItem = await Item.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true }
+    ).populate('submittedBy', 'name').populate('reviewedBy', 'name');
+
+    if (!updatedItem) {
+        throw Boom.notFound('Gagal mengupdate item, item tidak ditemukan.');
+    }
+
+    return h.response({
+      status: 'success',
+      message: `Item '${updatedItem.name}' berhasil diupdate.`,
+      data: formatItemDetails(updatedItem)
+    }).code(200);
+
+  } catch (err) {
+    if (err.isBoom) {
+      throw err;
+    }
+    console.error('Error updating item:', err.message, err.stack);
+    throw Boom.internal('Terjadi kesalahan pada server saat mengupdate item.');
   }
 };

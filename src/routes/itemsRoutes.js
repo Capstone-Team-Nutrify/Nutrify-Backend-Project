@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable camelcase */
 import Joi from 'joi';
-import { getAllItems, getItemById, createItem } from '../controllers/itemsController.js';
+import { getAllItems, getItemById, getItemByName, createItem, updateItem } from '../controllers/itemsController.js';
 
 const BahanItemSchemaJoi = Joi.object({
   ingredientName: Joi.string(),
@@ -77,13 +77,11 @@ const ItemDetailSchema = Joi.object({
 const ItemListSchema = Joi.object({
   id: Joi.string().required(),
   name: Joi.string().required(),
-  origin: Joi.string().allow(null, ''),
+  nation: Joi.string().allow('', null).optional(),
+  origin: Joi.string().allow('', null).optional(),
   category: Joi.string().required(),
-  description: Joi.string().allow(null, ''),
-  image: Joi.string().uri().required().allow(null, ''),
-  origin: Joi.string().allow(null, ''),
-  submittedBy: Joi.string().allow(null, '').optional(),
-  submittedAt: Joi.string().isoDate().allow(null).optional(),
+  image: Joi.string().uri().allow('', null).optional(),
+  description: Joi.string().allow('', null).optional(),
 }).unknown(true);
 
 const IngredientInputSchema = Joi.object({
@@ -92,7 +90,15 @@ const IngredientInputSchema = Joi.object({
   ingredientDose: Joi.string().required(),
 });
 
-
+const UpdateItemPayloadSchema = Joi.object({
+  name: Joi.string().min(3).max(100).optional(),
+  nation: Joi.string().allow('', null).optional(),
+  description: Joi.string().min(10).optional(),
+  image: Joi.string().uri().optional(),
+  category: Joi.string().optional(),
+  origin: Joi.string().allow('', null).optional(),
+  ingredients: Joi.array().items(IngredientInputSchema).min(1).optional(),
+});
 
 const CreateItemPayloadSchema = Joi.object({
   name: Joi.string().min(3).max(100).required(),
@@ -100,7 +106,6 @@ const CreateItemPayloadSchema = Joi.object({
   description: Joi.string().min(10).required(),
   image: Joi.string().uri().required(),
   category: Joi.string().required(),
-  // nutrisi_total: NutrisiSchemaJoiDb.required(),
   origin: Joi.string().allow('', null).optional(),
   ingredients: Joi.array().items(IngredientInputSchema).min(1).required(),
 });
@@ -140,14 +145,14 @@ export default [
   },
 {
     method: 'GET',
-    path: '/api/items/{id}',
+    path: '/api/items/{name}',
     options: {
       auth: false,
-      description: 'Dapatkan detail makanan atau minuman berdasarkan ID (approved)',
+      description: 'Dapatkan detail makanan atau minuman berdasarkan Nama (approved)',
       tags: ['api', 'items'],
       validate: {
         params: Joi.object({
-          id: Joi.string().required(), 
+          name: Joi.string().required().description('Nama item yang ingin dicari (URL encoded)'), 
         }),
       },
       response: {
@@ -159,7 +164,31 @@ export default [
           }),
         },
       },
-      handler: getItemById, 
+      handler: getItemByName, 
+    },
+  },
+  {
+    method: 'GET',
+    path: '/api/items/id/{id}', 
+    options: {
+      auth: false,
+      description: 'Dapatkan detail makanan atau minuman berdasarkan ID (approved)',
+      tags: ['api', 'items'],
+      validate: {
+        params: Joi.object({
+          id: Joi.string().hex().length(24).required().description('ID unik dari item'),
+        }),
+      },
+      response: {
+        status: {
+          200: Joi.object({
+            status: 'success',
+            message: Joi.string().required(),
+            data: ItemDetailSchema.required(),
+          }),
+        },
+      },
+      handler: getItemById,
     },
   },
   {
@@ -187,5 +216,30 @@ export default [
       },
       handler: createItem,
     },
+  },
+  {
+    method: 'PATCH',
+    path: '/api/items/{id}',
+    options: {
+      auth: { strategy: 'jwt', mode: 'required' },
+      description: 'Update data item (Admin/Moderator). Jika bahan diupdate, data nutrisi akan dihitung ulang.',
+      tags: ['api', 'items', 'moderation'],
+      validate: {
+        params: Joi.object({
+          id: Joi.string().hex().length(24).required().description('ID unik item yang akan diupdate'),
+        }),
+        payload: UpdateItemPayloadSchema
+      },
+      response: {
+        status: {
+          200: Joi.object({
+            status: Joi.string().valid('success').required(),
+            message: Joi.string().required(),
+            data: ItemDetailSchema.required(),
+          })
+        }
+      },
+      handler: updateItem,
+    }
   },
 ];

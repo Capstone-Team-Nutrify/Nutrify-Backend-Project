@@ -18,7 +18,7 @@ export const getPendingItems = async (request, h) => {
     const skip = (page - 1) * limit;
 
     const pendingItemsQuery = PendingItem.find({ status: 'pending' })
-      .populate('submittedBy', 'name email')
+      .populate('submittedBy', 'name')
       .sort({ createdAt: 1 })
       .skip(skip)
       .limit(limit);
@@ -38,7 +38,7 @@ export const getPendingItems = async (request, h) => {
       description: item.description,
       image: item.image,
       origin: item.origin,
-      submittedBy: item.submittedBy ? item.submittedBy._id.toString() : null,
+      submittedBy: item.submittedBy ? item.submittedBy.name : null,
       submittedAt: item.createdAt ? item.createdAt.toISOString() : null,
       status: item.status,
     }));
@@ -234,6 +234,7 @@ export const rejectPendingItem = async (request, h) => {
           pendingId: pendingItem._id.toString(),
           name: pendingItem.name,
           status: 'rejected',
+          rejectionReason: pendingItem.reviewNotes,
         },
       })
       .code(200);

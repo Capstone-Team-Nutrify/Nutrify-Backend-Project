@@ -1,5 +1,6 @@
 import User from '../models/user.js';
 import Boom from '@hapi/boom';
+import mongoose from 'mongoose';
 
 export const getAllUsers = async (request, h) => {
   try {
@@ -73,7 +74,7 @@ export const changeUserRole = async (request, h) => {
     }
 
     if (userToChange._id.toString() === adminMakingRequest) {
-      throw Boom.badRequest('Admin tidak dapat mengubah role dirinya sendiri melalui endpoint ini.');
+      throw Boom.badRequest('Admin tidak dapat mengubah role dirinya sendiri.');
     }
 
     if (userToChange.role === newRole) {
@@ -86,7 +87,7 @@ export const changeUserRole = async (request, h) => {
     }
 
     if (userToChange.role === 'admin' && newRole !== 'admin') {
-      throw Boom.forbidden('Admin tidak dapat menurunkan role admin lain melalui endpoint ini.');
+      throw Boom.forbidden('Admin tidak dapat menurunkan role admin lain.');
     }
 
     userToChange.role = newRole;
@@ -117,7 +118,7 @@ export const deleteUserByAdmin = async (request, h) => {
     const { userIdToDelete } = request.params;
 
     if (adminMakingRequest === userIdToDelete) {
-      throw Boom.badRequest('Admin tidak dapat menghapus akunnya sendiri melalui endpoint ini.');
+      throw Boom.badRequest('Admin tidak dapat menghapus akunnya sendiri.');
     }
 
     const userToDelete = await User.findById(userIdToDelete);
@@ -143,5 +144,49 @@ export const deleteUserByAdmin = async (request, h) => {
     }
     console.error('Error deleting user by admin:', err.message, err.stack);
     throw Boom.internal('Terjadi kesalahan pada server saat menghapus pengguna.');
+  }
+};
+
+export const getUserById = async (request, h) => {
+  try {
+    if (request.auth.credentials.role !== 'admin') {
+      throw Boom.forbidden('Akses ditolak. Hanya admin yang dapat mengakses sumber daya ini.');
+    }
+
+    const { id } = request.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw Boom.badRequest('Format ID pengguna tidak valid.');
+    }
+
+    const user = await User.findById(id).select('-password');
+
+    if (!user) {
+      throw Boom.notFound('Pengguna dengan ID tersebut tidak ditemukan.');
+    }
+
+    return h.response({
+        status: 'success',
+        user: {
+          _id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          hasProfilePicture: !!user.profilePictureData,
+          profilePictureMimeType: user.profilePictureMimeType || null,
+          age: user.age || null,
+          height: user.height || null,
+          weight: user.weight || null,
+          isVerified: user.isVerified,
+          createdAt: user.createdAt ? user.createdAt.toISOString() : null,
+          updatedAt: user.updatedAt ? user.updatedAt.toISOString() : null,
+        },
+    }).code(200);
+  } catch (err) {
+    if (err.isBoom) {
+      throw err;
+    }
+    console.error('Error fetching user by ID:', err.message, err.stack);
+    throw Boom.internal('Terjadi kesalahan pada server saat mengambil data pengguna.');
   }
 };

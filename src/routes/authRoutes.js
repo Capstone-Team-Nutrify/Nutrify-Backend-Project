@@ -109,29 +109,29 @@ export default [
   },
   {
     method: 'PUT',
-    path: '/api/update-profile',
+    path: '/api/profile',
     options: {
       auth: { strategy: 'jwt', mode: 'required' },
-      description: 'Update profil pengguna (termasuk nama, usia, tinggi, berat, foto profil)', // Deskripsi bisa diupdate
+      description: 'Update profil pengguna (termasuk nama, usia, tinggi, berat, foto profil)', 
       tags: ['api', 'auth'],
       payload: {
-        maxBytes: 5 * 1024 * 1024, // 5MB
+        maxBytes: 5 * 1024 * 1024, 
         output: 'stream',
         parse: true,
         multipart: { output: 'stream' },
-        allow: ['application/json', 'multipart/form-data'], // Izinkan kedua tipe konten
+        allow: ['application/json', 'multipart/form-data'],
       },
       validate: {
         payload: Joi.object({
-          name: Joi.string().trim().min(3).max(100).optional() // Tambahkan validasi untuk nama
+          name: Joi.string().trim().min(3).max(100).optional() 
             .description('Nama pengguna baru (opsional, 3-100 karakter)'),
           age: Joi.number().integer().min(0).allow(null, '').optional(),
           height: Joi.number().min(0).allow(null, '').optional(),
           weight: Joi.number().min(0).allow(null, '').optional(),
           profilePicture: Joi.any().optional().allow(null, '').meta({ swaggerType: 'file' }),
         })
-          .unknown(true) // Izinkan field lain jika menggunakan multipart/form-data
-          .options({ convert: true }), // Penting untuk konversi tipe data
+          .unknown(true) 
+          .options({ convert: true }), 
         failAction: 'error',
       },
       response: {
@@ -141,7 +141,7 @@ export default [
             message: Joi.string().required(),
             data: Joi.object({
               userId: Joi.string().required(),
-              name: Joi.string().required(), // Skema respons sudah memiliki nama
+              name: Joi.string().required(), 
               age: Joi.number().integer().min(0).allow(null).required(),
               height: Joi.number().min(0).allow(null).required(),
               weight: Joi.number().min(0).allow(null).required(),

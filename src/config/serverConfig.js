@@ -1,11 +1,16 @@
 export const serverConfig = {
   port: process.env.PORT,
-  host: process.env.HOST,
+  host: process.env.HOST || '0.0.0.0',
   routes: {
     cors: {
-      origin: ['*'],
+      origin: [
+        'http://localhost:3000',
+        'https://www.nutrify.web.id',
+        'http://api.nutrify.web.id',
+      ],
       credentials: true,
-      headers: ['Accept', 'Content-Type', 'Authorization'],
+      headers: ['Accept', 'Content-Type', 'Authorization', 'Origin', 'X-Requested-With'],
+      additionalHeaders: ['cache-control', 'x-requested-with'],
     },
     validate: {
       failAction: async (request, h, err) => {

@@ -143,13 +143,11 @@ export const currentUser = async (request, h) => {
 export const updateProfile = async (request, h) => {
   try {
     const userId = request.auth.credentials.id;
-    // Ambil 'name' dari payload
+  
     const { name, age, height, weight, profilePicture } = request.payload;
 
     const updateData = {};
 
-    // Tambahkan nama ke updateData jika ada di payload
-    // Validasi (trim, min length) akan ditangani oleh Joi di definisi rute
     if (name !== undefined) {
       updateData.name = name;
     }
@@ -197,7 +195,7 @@ export const updateProfile = async (request, h) => {
           message: 'Tidak ada data profil yang diubah.',
           data: {
             userId: currentUserData._id.toString(),
-            name: currentUserData.name, // Menampilkan nama saat ini
+            name: currentUserData.name, 
             age: currentUserData.age || null,
             height: currentUserData.height || null,
             weight: currentUserData.weight || null,
@@ -218,7 +216,7 @@ export const updateProfile = async (request, h) => {
         message: 'Profile updated successfully',
         data: {
           userId: updatedUser._id.toString(),
-          name: updatedUser.name, // Akan menampilkan nama yang baru jika diubah
+          name: updatedUser.name, 
           age: updatedUser.age,
           height: updatedUser.height,
           weight: updatedUser.weight,

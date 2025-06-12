@@ -100,7 +100,7 @@ const ItemSchema = new Schema(
     disease_rate: [DiseaseRateSchema],
     submittedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     submittedAt: { type: Date, default: Date.now }, 
-    reviewedBy: { type: Schema.Types.ObjectId, ref: 'Admin' }, 
+    reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     reviewedAt: { type: Date }, 
     isPublic: {
       type: Boolean,

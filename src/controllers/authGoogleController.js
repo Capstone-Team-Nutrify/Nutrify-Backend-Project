@@ -1,23 +1,27 @@
-/* eslint-disable camelcase */
 import { google } from 'googleapis';
 import User from '../models/user.js';
 import { generateToken, setJwtCookie } from '../utils/jwtTemplate.js';
 import axios from 'axios';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  'http://localhost:8080/auth/google/callback'
-  // process.env.GOOGLE_REDIRECT_URI
+  process.env.GOOGLE_REDIRECT_DEV
+  // process.env.GOOGLE_REDIRECT_PROD
 );
 
-const scopes = ['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'];
+const scopes = [
+  'https://www.googleapis.com/auth/userinfo.email',
+  'https://www.googleapis.com/auth/userinfo.profile',
+];
 
 const authorizationUrl = (request, h) => {
   const url = oauth2Client.generateAuthUrl({
-    access_type: 'offline',
+    access_type: 'offline', // eslint-disable-line camelcase
     scope: scopes,
-    include_granted_scopes: true,
+    include_granted_scopes: true, // eslint-disable-line camelcase
   });
   return h.redirect(url);
 };
@@ -41,7 +45,9 @@ const googleCallback = async (request, h) => {
     const { data } = await oauth2.userinfo.get();
 
     if (!data) {
-      return h.response({ err: 'Failed to get user data from Google' }).code(400);
+      return h
+        .response({ err: 'Failed to get user data from Google' })
+        .code(400);
     }
 
     let user = await User.findOne({ email: data.email });
