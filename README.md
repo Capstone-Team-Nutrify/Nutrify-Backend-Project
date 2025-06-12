@@ -114,8 +114,6 @@ Proyek ini menggunakan `hapi-swagger` untuk membuat dokumentasi API yang interak
 
 ### Ringkasan Endpoint Utama
 
-Berikut adalah daftar endpoint API lengkap dalam format tersebut:
-
 ```
 Berikut adalah beberapa endpoint utama yang tersedia:
 
