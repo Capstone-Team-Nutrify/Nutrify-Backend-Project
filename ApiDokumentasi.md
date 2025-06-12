@@ -342,6 +342,12 @@ Endpoint khusus untuk `admin` dan `moderator` untuk mengelola item yang menunggu
     }
     ```
 
+    * **Response Error**:
+    * `403 Forbidden`: Pengguna bukan `admin` atau `moderator`.
+    * `404 Not Found`: Item dengan ID tersebut tidak ditemukan.
+    * `409 Conflict`: Nama item yang baru sudah digunakan oleh item lain.
+    * `503 Service Unavailable`: Gagal menghubungi layanan ML untuk menghitung ulang nutrisi.
+
 ### **`DELETE /api/items/{id}`**
 
 * **Deskripsi**: Menghapus data dari makanan/minuman yang sudah ada (publik) secara permanen. Operasi ini tidak dapat diurungkan.
@@ -358,13 +364,6 @@ Endpoint khusus untuk `admin` dan `moderator` untuk mengelola item yang menunggu
 * **Response Error**:
     * `403 Forbidden`: Pengguna bukan `admin` atau `moderator`.
     * `404 Not Found`: Item dengan ID tersebut tidak ditemukan.
-
-
-* **Response Error**:
-    * `403 Forbidden`: Pengguna bukan `admin` atau `moderator`.
-    * `404 Not Found`: Item dengan ID tersebut tidak ditemukan.
-    * `409 Conflict`: Nama item yang baru sudah digunakan oleh item lain.
-    * `503 Service Unavailable`: Gagal menghubungi layanan ML untuk menghitung ulang nutrisi.
 
 ## 4. Administrasi Pengguna (Admin Only)
 
