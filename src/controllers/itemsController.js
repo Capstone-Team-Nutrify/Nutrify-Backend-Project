@@ -293,25 +293,20 @@ export const deleteItem = async (request, h) => {
     const { id } = request.params;
     const userRole = request.auth.credentials.role;
 
-    // 1. Verifikasi hak akses
     if (userRole !== 'admin' && userRole !== 'moderator') {
       throw Boom.forbidden('Akses ditolak. Hanya admin atau moderator yang dapat menghapus item.');
     }
 
-    // 2. Validasi ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw Boom.badRequest('Format ID item tidak valid.');
     }
 
-    // 3. Cari dan hapus item
     const deletedItem = await Item.findByIdAndDelete(id);
 
-    // 4. Handle jika item tidak ditemukan
     if (!deletedItem) {
       throw Boom.notFound('Item yang akan dihapus tidak ditemukan.');
     }
 
-    // 5. Kirim respons sukses
     return h.response({
       status: 'success',
       message: `Item '${deletedItem.name}' berhasil dihapus secara permanen.`,
