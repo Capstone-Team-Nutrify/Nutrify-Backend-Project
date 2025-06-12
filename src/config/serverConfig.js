@@ -7,6 +7,7 @@ export const serverConfig = {
         'http://localhost:3000',
         'https://www.nutrify.web.id',
         'http://api.nutrify.web.id',
+        'https://nutrify-083.et.r.appspot.com'
       ],
       credentials: true,
       headers: ['Accept', 'Content-Type', 'Authorization', 'Origin', 'X-Requested-With'],

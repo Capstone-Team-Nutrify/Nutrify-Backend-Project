@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable camelcase */
 import Joi from 'joi';
-import { getAllItems, getItemById, getItemByName, createItem, updateItem } from '../controllers/itemsController.js';
+import { getAllItems, getItemById, getItemByName, createItem, updateItem, deleteItem } from '../controllers/itemsController.js';
 
 const BahanItemSchemaJoi = Joi.object({
   ingredientName: Joi.string(),
@@ -240,6 +240,29 @@ export default [
         }
       },
       handler: updateItem,
+    }
+  },
+  {
+    method: 'DELETE',
+    path: '/api/items/{id}',
+    options: {
+      auth: { strategy: 'jwt', mode: 'required' },
+      description: 'Hapus data item publik secara permanen (Admin/Moderator).',
+      tags: ['api', 'items', 'moderation'],
+      validate: {
+        params: Joi.object({
+          id: Joi.string().hex().length(24).required().description('ID unik item yang akan dihapus'),
+        }),
+      },
+      response: {
+        status: {
+          200: Joi.object({
+            status: Joi.string().valid('success').required(),
+            message: Joi.string().required(),
+          })
+        }
+      },
+      handler: deleteItem,
     }
   },
 ];

@@ -341,6 +341,25 @@ Endpoint khusus untuk `admin` dan `moderator` untuk mengelola item yang menunggu
         }
     }
     ```
+
+### **`DELETE /api/items/{id}`**
+
+* **Deskripsi**: Menghapus data dari makanan/minuman yang sudah ada (publik) secara permanen. Operasi ini tidak dapat diurungkan.
+* **Auth**: **Wajib** (JWT, Role: `admin` atau `moderator`).
+* **Path Parameters**:
+    * `id` (string, wajib): ID unik dari item yang akan dihapus.
+* **Response Sukses (200)**: 
+    ```json
+    {
+        "status": "success",
+        "message": "Item 'Nama Item' berhasil dihapus secara permanen."
+    }
+    ```
+* **Response Error**:
+    * `403 Forbidden`: Pengguna bukan `admin` atau `moderator`.
+    * `404 Not Found`: Item dengan ID tersebut tidak ditemukan.
+
+
 * **Response Error**:
     * `403 Forbidden`: Pengguna bukan `admin` atau `moderator`.
     * `404 Not Found`: Item dengan ID tersebut tidak ditemukan.
