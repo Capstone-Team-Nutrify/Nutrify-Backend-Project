@@ -114,25 +114,37 @@ Proyek ini menggunakan `hapi-swagger` untuk membuat dokumentasi API yang interak
 
 ### Ringkasan Endpoint Utama
 
+Berikut adalah daftar endpoint API lengkap dalam format tersebut:
+
+```
 Berikut adalah beberapa endpoint utama yang tersedia:
 
-| Metode | Path                                        | Deskripsi                                                                 | Autentikasi   |
-| :----- | :------------------------------------------ | :------------------------------------------------------------------------ | :------------ |
-| `POST` | `/api/register`                             | Mendaftarkan pengguna baru.                                               | Tidak         |
-| `POST` | `/api/login`                                | Login pengguna dengan email dan password.                                 | Tidak         |
-| `GET`  | `/api/google`                               | Mengarahkan ke halaman login Google.                                      | Tidak         |
-| `GET`  | `/api/profile`                              | Mendapatkan detail profil pengguna yang sedang login.                     | Ya (JWT)      |
-| `PUT`  | `/api/profile`                              | Memperbarui profil pengguna.                                              | Ya (JWT)      |
-| `GET`  | `/api/items`                                | Mendapatkan daftar semua makanan yang telah disetujui (publik).           | Tidak         |
-| `GET`  | `/api/items/{name}`                         | Mendapatkan detail makanan berdasarkan namanya.                           | Tidak         |
-| `POST` | `/api/items`                                | Mengajukan data makanan baru.                                             | Ya (JWT)      |
-| `GET`  | `/api/pending-items`                        | (Admin/Mod) Mendapatkan daftar makanan yang menunggu persetujuan.         | Ya (Admin/Mod)|
-| `PATCH`| `/api/pending-items/{pendingId}/approve`    | (Admin/Mod) Menyetujui pengajuan makanan.                                 | Ya (Admin/Mod)|
-| `PATCH`| `/api/pending-items/{pendingId}/reject`     | (Admin/Mod) Menolak pengajuan makanan.                                    | Ya (Admin/Mod)|
-| `PATCH`| `/api/items/{Id}`                           | (Admin/Mod) Edit data item publik.                                        | Ya (Admin/Mod)|
-| `GET`  | `/api/users`                                | (Admin) Mendapatkan daftar semua pengguna.                                | Ya (Admin)    |
-| `PATCH`| `/api/users/{userIdToChange}/role`          | (Admin) Mengubah peran (role) pengguna.                                   | Ya (Admin)    |
-| `DELETE`| `/api/users/{userIdToDelete}`               | (Admin) Menghapus akun pengguna.                                          | Ya (Admin)    |
++----------+--------------------------------------------------+------------------------------------------------------------------+-----------------+
+| Metode   | Path                                             | Deskripsi                                                        | Autentikasi     |
++----------+--------------------------------------------------+------------------------------------------------------------------+-----------------+
+| POST     | /api/register                                    | Mendaftarkan pengguna baru.                                      | Tidak           |
+| POST     | /api/login                                       | Login pengguna dengan email dan password.                        | Tidak           |
+| GET      | /api/google                                      | Mengarahkan ke halaman login Google.                             | Tidak           |
+| GET      | /api/auth/google/callback                        | URL callback setelah login Google berhasil.                      | Tidak           |
+| GET      | /api/profile                                     | Mendapatkan detail profil pengguna yang sedang login.            | Ya (JWT)        |
+| PUT      | /api/profile                                     | Memperbarui profil pengguna.                                     | Ya (JWT)        |
+| POST     | /predict                                         | Mengirim gambar untuk prediksi nutrisi.                          | Ya (JWT)        |
+| GET      | /api/items                                       | Mendapatkan daftar semua item yang telah disetujui (publik).     | Tidak           |
+| GET      | /api/items/name/{name}                           | Mendapatkan detail makanan berdasarkan namanya.                  | Tidak           |
+| GET      | /api/items/id/{id}                               | Mendapatkan detail item berdasarkan ID uniknya.                  | Tidak           |
+| GET      | /api/random-items                                | Mendapatkan beberapa item secara acak.                           | Tidak           |
+| POST     | /api/items                                       | Mengajukan data makanan baru.                                    | Ya (JWT)        |
+| GET      | /api/pending-items                               | (Admin/Mod) Mendapatkan daftar makanan yang menunggu persetujuan.| Ya (Admin/Mod)  |
+| PATCH    | /api/pending-items/{pendingId}/approve           | (Admin/Mod) Menyetujui pengajuan makanan.                        | Ya (Admin/Mod)  |
+| PATCH    | /api/pending-items/{pendingId}/reject            | (Admin/Mod) Menolak pengajuan makanan.                           | Ya (Admin/Mod)  |
+| PATCH    | /api/items/{id}                                  | (Admin/Mod) Edit data item publik.                               | Ya (Admin/Mod)  |
+| DELETE   | /api/items/{id}                                  | (Admin/Mod) Menghapus data item publik.                          | Ya (Admin/Mod)  |
+| GET      | /api/users                                       | (Admin) Mendapatkan daftar semua pengguna.                       | Ya (Admin)      |
+| GET      | /api/users/{id}                                  | (Admin) Mengambil detail informasi seorang pengguna.             | Ya (Admin)      |
+| PATCH    | /api/users/{userIdToChange}/role                 | (Admin) Mengubah peran (role) pengguna.                          | Ya (Admin)      |
+| DELETE   | /api/users/{userIdToDelete}                      | (Admin) Menghapus akun pengguna.                                 | Ya (Admin)      |
++----------+--------------------------------------------------+------------------------------------------------------------------+-----------------+
+```
 
 
 ## Struktur Proyek
